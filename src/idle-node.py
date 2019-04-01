@@ -127,6 +127,10 @@ class MainClass(object):
         self.logger.info("Getting group chat/conference room prompt...")
         self.prompt_gc_chat = config_handler.ConfigHandler(self.configfile).get("prompt_gc_chat")
         asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, "Starting {0}...".format(self.PROGRAM_NAME), "loading", 0.15)
+        # Prompt when editing config files.
+        self.logger.info("Getting settings/config panel prompt...")
+        self.prompt_settings_panel = config_handler.ConfigHandler(self.configfile).get("prompt_settings_panel")
+        asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, "Starting {0}...".format(self.PROGRAM_NAME), "loading", 0.15)
         # User details.
         self.logger.info("Getting username...")
         self.username = config_handler.ConfigHandler(self.configfile).get("username")
@@ -156,8 +160,7 @@ class MainClass(object):
         self.byebye = False
         
         self.logger.info("Finished loading!")
-        asciigraphs.ASCIIGraphs().animated_loading_screen_manual(True, "Starting {0}...".format(self.PROGRAM_NAME), "loading", 0.15)
-        print("Starting {0}... Done!".format(self.PROGRAM_NAME))
+        asciigraphs.ASCIIGraphs().animated_loading_screen_manual(True, "Starting {0}... Done!".format(self.PROGRAM_NAME), "loading", 0.15)
         
     def substitute(self, string):
         """
@@ -180,7 +183,19 @@ class MainClass(object):
         if what == "main":
             return """\
 help | ?                            Show this help menu.
+config | settings                   Access the Settings/Customization Panel.
+
 exit | quit | bye | shutdown        Quit {0}.""".format(self.PROGRAM_NAME)
+
+        elif what == "config_panel":
+            return """\
+help | ?                    Show this help menu.
+show                        List configuration values.
+set [OPTION] [VALUE]        Set the value for `OPTION`.
+discard [OPTION]            Discard changes made to `OPTION`.
+save                        Save current settings to configuration file.
+
+back                        Exit the Settings panel."""
 
         else:
             raise ValueError("Unknown string is passed to help method.")
@@ -191,20 +206,192 @@ exit | quit | bye | shutdown        Quit {0}.""".format(self.PROGRAM_NAME)
             Parse the command.
         """
         
-        # DEV0003
+        self.logger.info("parse_command() called.")
         if command.lower().startswith(("help", "?")):
+            self.logger.info("Printing help.")
             print(self.help())
             print()
             return 0
+        
+        elif command.lower().startswith(("config", "settings")):
+            self.logger.info("Starting config editor.")
+            return self.config_editor()
         
         elif command.lower().startswith(("exit", "quit", "bye", "shutdown")):
             self.byebye = True
             return 0
         
         else:
-            printer.Printer().print_with_status("Unknown command `{0}`!".format(command), 2)
+            self.logger.info("Unknown command entered.")
+            printer.Printer().print_with_status("Unknown command `{0}`! Type `help` for more info.".format(command), 2)
             print()
             return 2
+        
+    def config_editor(self):
+        """
+        def config_editor():
+            The Settings/Customization Panel.
+        """
+        
+        self.logger.info("config_editor() called.")
+        self.logger.info("Getting configuration file data...")
+        config_lines = config_handler.ConfigHandler(self.configfile).get()
+        self.logger.info("Entering loop...")
+        while True:
+            try:
+                config_command = str(input(self.substitute(self.prompt_settings_panel)))
+                if config_command.lower().startswith(("help", "?")):
+                    self.logger.info("Showing help menu.")
+                    print(self.help("config_panel"))
+                    print()
+                    
+                elif config_command.lower().startswith(("show")):
+                    self.logger.info("Printing all available settings.")
+                    for line in config_lines:
+                        if line.startswith(("#",)):
+                            continue
+                        
+                        elif line == "":
+                            continue
+                        
+                        elif line.startswith("first_run="):
+                            continue
+                        
+                        elif '=' in line:
+                            printer.Printer().print_with_status(line.replace('=', ': '), 0)
+                            # print(line.endswith("\n"))  # DEV0005: for debugging purposes only!
+                            
+                        else:
+                            continue
+                        
+                    print()
+                    
+                elif config_command.lower().startswith(("set")):
+                    self.logger.info("Set command called.")
+                    config_command = config_command.split(' ')
+                    try:
+                        self.logger.info("Getting option and its value...")
+                        option = config_command[1]
+                        value = config_command[2]
+                        
+                    except IndexError:
+                        self.logger.error("Cannot get option and value.")
+                        printer.Printer().print_with_status("USAGE: set [OPTION] [VALUE]", 2)
+                        continue
+                    
+                    if option.startswith(('#', "first_run=")):
+                        self.logger.error("Invalid option supplied.")
+                        printer.Printer().print_with_status("Invalid option!", 2)
+                        continue
+                    
+                    elif line == "":
+                        self.logger.error("Invalid option supplied.")
+                        printer.Printer().print_with_status("Invalid option!", 2)
+                        continue
+
+                    
+                    else:
+                        self.logger.info("Updating config lines...")
+                        new_config_lines = []
+                        changed = False
+                        for line in config_lines:
+                            self.logger.info("line contains `{0}`".format(line.replace('\n', '')))
+                            if line.startswith(option + '='):
+                                self.logger.info("line starts with `{0}=`".format(option))
+                                self.logger.info("Appending new value for option.")
+                                new_config_lines.append(option + '=' + value)
+                                changed = True
+                                
+                            else:
+                                self.logger.info("line does not start with `{0}=`".format(option))
+                                self.logger.info("Keeping things untouched.")
+                                new_config_lines.append(line)
+                                
+                        self.logger.info("Checking if program has changed the value...")
+                        if changed is False:
+                            self.logger.error("Cannot find option `{0}` in the config file!".format(option))
+                            printer.Printer().print_with_status("Cannot find option `{0}`!".format(option), 2)
+                            
+                        else:
+                            self.logger.info("Program has changed the value.")
+                            self.logger.info("Transferring new lines to old variable.")
+                            config_lines = new_config_lines
+                            del new_config_lines
+                        
+                elif config_command.lower().startswith(("discard",)):
+                    self.logger.info("Discard command called.")
+                    config_command = config_command.split(' ')
+                    try:
+                        self.logger.info("Getting option to discard...")
+                        option = config_command[1]
+                        
+                    except IndexError:
+                        self.logger.error("Cannot get option and value.")
+                        printer.Printer().print_with_status("USAGE: discard [OPTION]", 2)
+                        continue
+                    
+                    if option.startswith(('#', "first_run=")):
+                        self.logger.error("Invalid option supplied.")
+                        printer.Printer().print_with_status("Invalid option!", 2)
+                        continue
+
+                    elif line == "":
+                        self.logger.error("Invalid option supplied.")
+                        printer.Printer().print_with_status("Invalid option!", 2)
+                        continue
+                    
+                    else:
+                        value = config_handler.ConfigHandler(self.configfile).get(option)
+                        self.logger.info("Updating config lines...")
+                        new_config_lines = []
+                        for line in config_lines:
+                            self.logger.info("line contains `{0}`".format(line.replace('\n', '')))
+                            if line.startswith(option + '='):
+                                self.logger.info("line starts with `{0}=`".format(option))
+                                self.logger.info("Appending new value for option.")
+                                new_config_lines.append(option + '=' + value)
+                                
+                            else:
+                                self.logger.info("line does not start with `{0}=`".format(option))
+                                self.logger.info("Keeping things untouched.")
+                                new_config_lines.append(line)
+                                
+                        self.logger.info("Checking if program has changed the value...")
+                        if changed is False:
+                            self.logger.error("Cannot find option `{0}` in the config file!".format(option))
+                            printer.Printer().print_with_status("Cannot find option `{0}`!".format(option), 0)
+                            
+                        else:
+                            self.logger.info("Program has changed the value.")
+                            self.logger.info("Transferring new lines to old variable.")
+                            config_lines = new_config_lines
+                            del new_config_lines
+                            
+                elif config_command.lower().startswith(("save",)):
+                    printer.Printer().print_with_status("Saving current settings to configuration file...", 0)
+                    for config_line in config_lines:
+                        if config_line.startswith(("#", "first_run")):
+                            continue
+                        
+                        elif config_line == "":
+                            continue
+                        
+                        else:
+                            config_handler.config_handler.ConfigHandler(self.configfile).set(config_line.partition('=')[0], config_line.partition('=')[2])
+                            
+                    printer.Printer().print_with_status("Saving current settings to configuration file... Done!", 0)
+                    
+                elif config_command.lower().startswith(("back",)):
+                    return 0
+                    
+                else:
+                    self.logger.info("Unknown command entered.")
+                    printer.Printer().print_with_status("Unknown command `{0}`! Type `help` for more info.".format(config_command), 2)
+                    continue
+                
+            except(KeyboardInterrupt, EOFError):
+                self.logger.warning("CTRL+C and/or CTRL+D detected, forcing to quit...")
+                return 1
     
     def main(self):
         """
@@ -218,6 +405,7 @@ exit | quit | bye | shutdown        Quit {0}.""".format(self.PROGRAM_NAME)
         self.logger.info("Starting interactive shell...")
         
         print(self.PROGRAM_BANNER)
+        print(quote.quote())
         print()
         while self.byebye is False:
             try:
