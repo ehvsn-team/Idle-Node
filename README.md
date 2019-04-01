@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Idle-Node v0.0.0.1
 ## Copyright (C) 2019 :: EHVSN
 [Idle-Node](https://github.com/Catayao56/Idle-Node.git) is an open-source command-line messaging platform written in Python.
@@ -44,3 +45,9 @@
       
       -Just contact us and we'll respond as soon as possible.
       -You can also create a merge request on https://github.com/Idle-Node.git
+=======
+# Idle-Node
+An open-source command-line messaging platform written in Python.
+
+# 
+>>>>>>> c84262f56be04330a41f362e60fe6f685d0dee31
