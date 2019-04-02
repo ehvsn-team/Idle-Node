@@ -56,7 +56,7 @@ class ConfigHandler:
         else:
             try:
                 with open(self.config_path, 'w') as fopen:
-                    data = fopen.write(str(base64.b64encode(config_data.encode())).decode())
+                    data = fopen.write(base64.b64encode(config_data.encode()).decode())
                 
             except(FileNotFoundError, IOError, EOFError,
                    PermissionError, IsADirectoryError):
@@ -107,20 +107,34 @@ class ConfigHandler:
                 return 11
         
             else:
-                contents = self._open_config_file()
+                contents = self._open_config_file().split('\n')
                 new_config = []
                 for content in contents:
+                    # print(content)  # DEV0005
                     if content.startswith('#'):
                         new_config.append(content)
                     
                     elif content.startswith(variable + '='):
-                        new_config.append(variable + '=' + value + '\n')
+                        new_config.append(variable + '=' + value)
+                        
+                    elif content == "":
+                        new_config.append('')
                         
                     else:
                         new_config.append(content)
                         
+                result = ""
+                for line in new_config:
+                    # print('`' + line + '`')  # DEV0005
+                    if line == "":
+                        result += ''
+                        
+                    else:
+                        result += line + '\n'
+                    
+                # print(result)  # DEV0005
                 try:
-                    self._save_config_file()
+                    self._save_config_file(result)
                     
                 except Exception as error:
                     print(error)
