@@ -21,3 +21,7 @@ This document is used as a list of TO-DOs and other plans.
 [ ] _On Hold_ Peer-to-Peer Chat.
 [ ] _On Hold_ Group Chat / Conference Room.
 [ ] _On Hold_ Randomized greeting and when user will logout
+[ ] _On Hold_ What if the user's IP is version 6? How will the logger check it?
+[ ] _On Hold_ Why hide passwords when it is in plaintext when setting a new one?
+[ ] _On Hold_ Update loggers.
+[ ] _On Hold_ All changed settings will be discarded when `*` option is supplied.
