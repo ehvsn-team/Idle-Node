@@ -5,6 +5,7 @@ try:
     import os
     import sys
     import time
+    import platform
     import traceback
     
     import socket
@@ -46,6 +47,9 @@ Exit codes:
 2 = Unknown command 
 3 = Internet connection error
 4 = Both values does not match error
+5 = No module named <module>
+6 = Unknown DDNS provider.
+7 = Python version not supported.
 10 = Unknown error occured.
 
 """
@@ -88,7 +92,7 @@ class MainClass(object):
         self.PROGRAM_BANNER = """\
         _ ___  _    ____    _  _ ____ ___  ____ 
         | |  \ |    |___ __ |\ | |  | |  \ |___ 
-        | |__/ |___ |___    | \| |__| |__/ |___ {1}
+        | |__/ |___ |___    | \| |__| |__/ |___ v{1}
     {0}""".format(self.PROGRAM_DESCRIPTION, self.PROGRAM_VERSION)
     
         self.simplelib = simplelib.SimpleLib()
@@ -109,7 +113,30 @@ class MainClass(object):
             Initialize the program.
         """
         
-        self.logger.info("initialize() method called.")
+        self.logger.info("initialize() method called by {0}().".format(sys._getframe().f_back.f_code.co_name))
+        if prompt is None:
+            prompt = self.PROGRAM_NAME
+            
+        self.logger.info("User uses {0}.".format(platform.python_implementation()))
+        if platform.python_implementation() != 'CPython':
+            printer.Printer().print_with_status("You are not using CPython!", 1)
+            printer.Printer().print_with_status("{0} in {1} is not yet tested. YOU MAY ENCOUNTER BUGS.".format(self.PROGRAM_NAME, platform.python_implementation()), 1)
+            
+        pyversion = sys.version_info
+        self.logger.info("User uses {0} v{1}.{2}.{3}".format(platform.python_implementation(), pyversion[0], pyversion[1], pyversion[2]))
+        if pyversion[0] < 3 or pyversion[1] < 6 or pyversion[2] < 0:
+            printer.Printer().print_with_status("This version of python is not supported!", 1)
+            printer.Printer().print_with_status("You have `v{0}.{1}.{2}`. To run {3}, you must have CPython `v3.6.0`.".format(
+                pyversion[0], pyversion[1], pyversion[2], self.PROGRAM_NAME), 1)
+            
+            try:
+                sys.exit(7)
+                
+            except SystemExit:
+                os._exit(7)
+        
+        else:
+            del pyversion
         
         self.logger.info("Getting program data...")
         asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, "Starting {0}...".format(self.PROGRAM_NAME), "loading", 0.15)
@@ -154,7 +181,7 @@ class MainClass(object):
             self.userip = ""
             
         else:
-            self.logger.info("User's IP Address is `{0}.{1}.{2}.{3}`.".format(self.userip.split('.')[0], len(str(self.userip.split('.')[1])), len(str(self.userip.split('.')[2])), self.userip.split('.')[3]))
+            self.logger.info("User's IP Address is `{0}`.".format(self.userip))
             
         asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, "Starting {0}...".format(self.PROGRAM_NAME), "loading", 0.15)
         self.logger.info("Setting chat placeholders...")
@@ -176,7 +203,223 @@ class MainClass(object):
         self.byebye = False
         
         self.logger.info("Finished loading!")
-        asciigraphs.ASCIIGraphs().animated_loading_screen_manual(True, "Starting {0}... Done!".format(self.PROGRAM_NAME), "loading", 0.15)
+        if prompt.endswith('.'):
+            asciigraphs.ASCIIGraphs().animated_loading_screen_manual(True, "{0} Done!".format(prompt), "loading", 0.15)
+            
+        else:
+            asciigraphs.ASCIIGraphs().animated_loading_screen_manual(True, "{0}... Done!".format(prompt), "loading", 0.15)
+            
+        self.logger.info("first_run value is `{0}`.".format(config_handler.ConfigHandler(self.configfile).get("first_run")))
+        # print(config_handler.ConfigHandler(self.configfile).get("first_run"))  # DEV0005
+        # print(type(config_handler.ConfigHandler(self.configfile).get("first_run")))  # DEV0005
+        if config_handler.ConfigHandler(self.configfile).get("first_run") is True:
+            if self.first_run() == 0:
+                config_handler.ConfigHandler(self.configfile).set("first_run", "False")
+                return 0
+                
+            else:
+                return 1
+            
+        else:
+            return 0
+        
+    def first_run(self):
+        """
+        def first_run():
+            Run a "Wizard" to help the user set up.
+        """
+        
+        self.logger.info("first_run() method called by {0}().".format(sys._getframe().f_back.f_code.co_name))
+        try:
+            print("\n===============================")
+            print("Welcome to {0}!".format(self.PROGRAM_NAME))
+            print("===============================")
+            print()
+            print("Do you want to continue using this first-run wizard? (y/n)")
+            while True:
+                try:
+                    first_run_ask = str(input("Answer: "))
+                    
+                    if first_run_ask.lower() == 'y':
+                        break
+                    
+                    elif first_run_ask.lower() == 'n':
+                        printer.Printer().print_with_status("Type `first_run` in the main terminal to run this wizard.", 0)
+                        return 0
+                    
+                except(KeyboardInterrupt, EOFError):
+                    continue
+                
+            while True:
+                try:
+                    username = input("Username: ")
+                    break
+                    
+                except(KeyboardInterrupt, EOFError):
+                    continue
+        
+            while True:
+                try:
+                    userpass = getpass("Password: ")
+                    checkpass = getpass("Confirm Password: ")
+                    if userpass == checkpass:
+                        break
+                    
+                    else:
+                        printer.Printer().print_with_status("Both passwords does not match!", 2)
+                        continue
+                    
+                except(KeyboardInterrupt, EOFError):
+                    continue
+
+            while True:
+                try:
+                    print("Do you need a DDNS?")
+                    print("(DDNS is usually used if you have a dynamic IP.)")
+                    printer.Printer().print_with_status("For more info, search on your favorite search engine.", 0)
+                    use_ddns = input("Answer (y/n): ")
+                    if use_ddns.lower() == 'y':
+                        use_ddns = True
+                        break
+                        
+                    elif use_ddns.lower() == 'n':
+                        use_ddns = False
+                        break
+                        
+                    else:
+                        continue
+                    
+                except(KeyboardInterrupt, EOFError):
+                    continue
+                
+            if use_ddns is True:
+                print("Supported DDNS Providers:")
+                print("    -DuckDNS.org        -noip.com")
+                print()
+                while True:
+                    try:
+                        ddns_provider = input("Please enter your DDNS Provider: ")
+                        
+                        if "duckdns" in  ddns_provider.lower():
+                            ddns_provider = "DuckDNS"
+                            break
+                            
+                        elif "noip" in  ddns_provider.lower():
+                            ddns_provider = "noip"
+                            break
+                            
+                        else:
+                            continue
+                        
+                    except(TypeError, ValueError, EOFError, KeyboardInterrupt):
+                        continue
+                    
+            else:
+                pass
+            
+            if use_ddns is True:
+                if ddns_provider == "DuckDNS":
+                    while True:
+                        try:
+                            ddns_domain = input("Enter your DuckDNS.org domain name: ")
+                            ddns_token = getpass("Enter your DuckDNS.org token: ")
+                            break
+                            
+                        except(KeyboardInterrupt, EOFError):
+                            continue
+                        
+                elif ddns_provider == "noip":
+                    while True:
+                        try:
+                            ddns_domain = input("Enter your noip.com domain name: ")
+                            ddns_username = input("Enter your noip.com username: ")
+                            ddns_userpass = getpass("Enter your noip.com password: ")
+                            ddns_token = ddns_username + ':::' + ddns_userpass
+                            del ddns_username
+                            del ddns_userpass
+                            break
+                            
+                        except(KeyboardInterrupt, EOFError):
+                            continue
+                        
+                else:
+                    printer.Printer().print_with_status("Unknown DDNS provider!", 2)
+                    return 6
+                
+        except(TypeError, ValueError):
+            printer.Printer().print_with_status("An error occured when starting the First-run wizard.", 2)
+            self.latest_traceback = traceback.format_exc()
+            return 10
+        
+        else:
+            total_items = 6
+            asciigraphs.ASCIIGraphs().progress_bar_manual("Saving settings...", 0, total_items)
+            config_handler.ConfigHandler(self.configfile).set("first_run", "False")
+            asciigraphs.ASCIIGraphs().progress_bar_manual("Saving settings...", 1, total_items)
+            config_handler.ConfigHandler(self.configfile).set("username", username)
+            asciigraphs.ASCIIGraphs().progress_bar_manual("Saving settings...", 2, total_items)
+            config_handler.ConfigHandler(self.configfile).set("userpass", userpass)
+            asciigraphs.ASCIIGraphs().progress_bar_manual("Saving settings...", 3, total_items)
+            config_handler.ConfigHandler(self.configfile).set("ddns", str(use_ddns))
+            asciigraphs.ASCIIGraphs().progress_bar_manual("Saving settings...", 4, total_items)
+            config_handler.ConfigHandler(self.configfile).set("ddns_provider", ddns_provider)
+            asciigraphs.ASCIIGraphs().progress_bar_manual("Saving settings...", 5, total_items)
+            config_handler.ConfigHandler(self.configfile).set("ddns_domain", ddns_domain)
+            asciigraphs.ASCIIGraphs().progress_bar_manual("Saving settings...", 6, total_items)
+            config_handler.ConfigHandler(self.configfile).set("ddns_token", ddns_token)
+            self.initialize("Updating values...")
+            return 0
+            
+    def update_ddns_service(self):
+        """
+        def update_ddns_service():
+            Update DDNS if user uses one.
+        """
+        
+        self.logger.info("update_ddns_service() method called by {0}().".format(sys._getframe().f_back.f_code.co_name))
+        if self.use_ddns is True:
+            self.logger.info("Updating DDNS Service...")
+            if self.ddns_provider == "DuckDNS":
+                try:
+                    duckdns_recv = requests.get("https://www.duckdns.org/update?domains={0}&token={1}&ip={2}&verbose=true".format(self.ddns_domain, self.ddns_token, self.userip)).text
+                    duckdns_recv = duckdns_recv.split('\n')
+                    # print(duckdns_recv)  # DEV0005
+                    if duckdns_recv[0] == "OK":
+                        if duckdns_recv[1] == self.userip:
+                            if duckdns_recv[3] == "UPDATED":
+                                self.logger.info("No problems are encountered when updating DDNS.")
+                                
+                            else:
+                                self.logger.warning("DuckDNS returns `NOCHANGE`. Record is not updated.")
+                                
+                        else:
+                            self.logger.warning("DuckDNS record is not the same as the value in self.userip!")
+                            
+                    else:
+                        self.logger.error("KO! KO! DuckDNS replies.")
+                        
+                except(socket.gaierror, requests.packages.urllib3.exceptions.NewConnectionError,
+                   requests.packages.urllib3.exceptions.MaxRetryError,
+                   requests.exceptions.ConnectionError):
+                    self.latest_traceback = traceback.format_exc()
+                    self.logger.error("An error occured while updating DDNS.")
+                    
+            elif self.ddns_provider == "noip":
+                try:
+                    no_ip_updater.update(self.ddns_token.partition(':::')[0], self.ddns_token.partition(':::')[2], self.ddns_domain, self.userip)
+                    
+                except BaseException as error:
+                    self.latest_traceback = traceback.format_exc()
+                    self.logger.error("An error occured while updating DDNS.")
+                    
+            elif self.ddns_provider == "None":
+                pass
+                    
+            else:
+                self.logger.error("self.ddns_provider contains an unknown value: `{0}`".format(self.ddns_provider))
+                                  
+        else:
+            self.logger.info("User does not use DDNS service. Using IP address as the identity of user.")
         
     def substitute(self, string):
         """
@@ -184,6 +427,7 @@ class MainClass(object):
             Replace strings with the current value.
         """
         
+        self.logger.info("substitute() method called by {0}().".format(sys._getframe().f_back.f_code.co_name))
         result = string.replace("$USERNAME", self.username).replace("$USERIP", self.userip)
         result = result.replace("$RECVNAME", self.recvname).replace("$RECVIP", self.recvip)
         result = result.replace("$GCNAME", self.gcname).replace("$GCIP", self.gcip)
@@ -196,11 +440,14 @@ class MainClass(object):
             Return help string.
         """
         
+        self.logger.info("help() method called by {0}().".format(sys._getframe().f_back.f_code.co_name))
         if what == "main":
             return """\
 help | ?                            Show this help menu.
 config | settings                   Access the Settings/Customization Panel.
 update [OPTION]                     Update status of [OPTION]. (Type `update ?` for more info.)
+first_run                           Start the first-run wizard.
+clrscrn | cls | clr                 Clear the contents of the screen.
 
 exit | quit | bye | shutdown        Quit {0}.""".format(self.PROGRAM_NAME)
 
@@ -211,6 +458,7 @@ show                        List configuration values.
 set [OPTION] [VALUE]        Set the value for `OPTION`.
 discard [OPTION]            Discard changes made to `OPTION`.
 save                        Save current settings to configuration file.
+clrscrn | cls | clr         Clear the contents of the screen.
 
 back                        Exit the Settings panel."""
 
@@ -229,7 +477,7 @@ ip              Update YOUR IP Address.
             Parse the command.
         """
         
-        self.logger.info("parse_command() called.")
+        self.logger.info("parse_command() called by {0}().".format(sys._getframe().f_back.f_code.co_name))
         if command.lower().startswith(("help", "?")):
             self.logger.info("Printing help.")
             print(self.help())
@@ -244,6 +492,12 @@ ip              Update YOUR IP Address.
             self.logger.info("Calling update method...")
             return self.update_status(command)
         
+        elif command.lower().startswith(("first_run",)):
+            return self.first_run()
+        
+        elif command.lower().startswith(("cls", "clear", "clr")):
+            self.simplelib.clrscrn()
+
         elif command.lower().startswith(("exit", "quit", "bye", "shutdown")):
             self.byebye = True
             return 0
@@ -260,7 +514,7 @@ ip              Update YOUR IP Address.
             The Settings/Customization Panel.
         """
         
-        self.logger.info("config_editor() called.")
+        self.logger.info("config_editor() called by {0}().".format(sys._getframe().f_back.f_code.co_name))
         self.logger.info("Getting configuration file data...")
         config_lines = config_handler.ConfigHandler(self.configfile).get()
         self.logger.info("Entering loop...")
@@ -335,7 +589,7 @@ ip              Update YOUR IP Address.
                         new_config_lines = []
                         changed = False
                         for line in config_lines:
-                            self.logger.info("line contains `{0}`".format(line.replace('\n', '')))
+                            # self.logger.debug("line contains `{0}`".format(line.replace('\n', '')))
                             if line.startswith(option + '='):
                                 self.logger.info("line starts with `{0}=`".format(option))
                                 self.logger.info("Appending new value for option.")
@@ -391,11 +645,11 @@ ip              Update YOUR IP Address.
                             self.logger.info("Updating config lines...")
                             new_config_lines = []
                             for line in config_lines:
-                                self.logger.info("line contains `{0}`".format(line.replace('\n', '')))
+                                # self.logger.debug("line contains `{0}`".format(line.replace('\n', '')))
                                 if line.startswith(option + '='):
                                     self.logger.info("line starts with `{0}=`".format(option))
                                     self.logger.info("Appending new value for option.")
-                                    new_config_lines.append(option + '=' + value)
+                                    new_config_lines.append(option + '=' + str(value))
                                     
                                 else:
                                     self.logger.info("line does not start with `{0}=`".format(option))
@@ -414,6 +668,7 @@ ip              Update YOUR IP Address.
                                 del new_config_lines
                                 
                 elif config_command.lower().startswith(("save",)):
+                    self.logger.info("Saving settings to configuration file...")
                     printer.Printer().print_with_status("Saving current settings to configuration file...", 0)
                     for config_line in config_lines:
                         if config_line.startswith(("#", "first_run")):
@@ -423,12 +678,16 @@ ip              Update YOUR IP Address.
                             continue
                         
                         else:
+                            self.logger.info("Writing `{0}` to `{1}`...".format(config_line.partition('=')[0], self.configfile))
                             # print(config_line.partition('=')[0], '=', config_line.partition('=')[2])  # DEV0005
                             config_handler.ConfigHandler(self.configfile).set(config_line.partition('=')[0], config_line.partition('=')[2])
                             
                     printer.Printer().print_with_status("Saving current settings to configuration file... Done!", 0)
                     printer.Printer().print_with_status("Please restart {0} to use the new configuration.".format(self.PROGRAM_NAME), 1)
                     continue
+                
+                elif config_command.lower().startswith(("cls", "clear", "clr")):
+                    self.simplelib.clrscrn()
                     
                 elif config_command.lower().startswith(("back",)):
                     return 0
@@ -448,6 +707,7 @@ ip              Update YOUR IP Address.
             Update status of [OPTION].
         """
         
+        self.logger.info("update_status() method called by {0}().".format(sys._getframe().f_back.f_code.co_name))
         command = command.split(' ')
         
         try:
@@ -493,13 +753,13 @@ ip              Update YOUR IP Address.
             The main method of MainClass() class.
         """
         
-        self.logger.info("main() method called.")
+        self.logger.info("main() method called by {0}().".format(sys._getframe().f_back.f_code.co_name))
         
         # Start the interactive shell.
         self.logger.info("Starting interactive shell...")
         
         print(self.PROGRAM_BANNER)
-        print(quote.quote())
+        print('"' + quote.quote() + '"')
         print()
         while self.byebye is False:
             try:

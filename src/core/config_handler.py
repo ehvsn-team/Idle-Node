@@ -79,11 +79,22 @@ class ConfigHandler:
             # print(contents)  # DEV0005
             contents = contents.split('\n')
             for content in contents:
+                # print(content)  # DEV0005
                 if content.startswith('#'):
                     continue
                 
                 elif content.startswith(data + '='):
-                    return content.replace('\n', '').partition('=')[2]
+                    # print("\t\t\tb: ", content)  # DEV0005
+                    # This if-else statement below is *specially* for booleans.
+                    # DEV0001: Might introduce bugs in the future!
+                    if content.replace('\n', '').partition('=')[2] == "True":
+                        return True
+                    
+                    elif content.replace('\n', '').partition('=')[2] == "False":
+                        return False
+                    
+                    else:
+                        return content.replace('\n', '').partition('=')[2]
                 
                 else:
                     continue
