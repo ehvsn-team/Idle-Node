@@ -5,7 +5,7 @@ import base64
 
 # Decode config files.
 def main():
-    for filename in ["config.dat", "contact_list.lst"]:
+    for filename in ["config.dat", "contact_list.lst", "real_config.dat"]:
         encode(filename)
         
 def encode(filename):

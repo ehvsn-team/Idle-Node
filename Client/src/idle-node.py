@@ -54,6 +54,23 @@ Exit codes:
 
 """
 
+"""
+config.dat and real_config.dat contents:
+
+first_run              ::  `True` or `False`  ::  True is the program is not yet started. Otherwise, it is set to False.
+ip_list                ::  a string           ::  The path of the contact list file.
+username               ::  a string           ::  The user's username.
+userpass               ::  an SHA-1 hash      ::  The user's hashed password.
+prompt_main            ::  a string           ::  The string that will show in the main menu prompt.
+prompt_p2p_chat        ::  a string           ::  The string that will show when chatting with peers.
+prompt_gc_chat         ::  a string           ::  The string that will show when chatting on a conference room.
+prompt_settings_panel  ::  a string           ::  The string that will show when on the settings panel.
+ddns                   ::  `True` or `False`  ::  True if user uses a DDNS service. Otherwise, it is set to False.
+ddns_provider          ::  a string           ::  The DDNS provider's name.
+ddns_domain            ::  a string           ::  The user's DDNS domain given by the DDNS provider.
+ddns_token             ::  a string           ::  The user's DDNS token/API key/password given by the DDNS provider.
+"""
+
 class MainClass(object):
     """
     MainClass():
@@ -87,7 +104,7 @@ class MainClass(object):
         # Define program variables.
         self.logger.info("Defining program variables...")
         self.PROGRAM_NAME = "Idle-Node"
-        self.PROGRAM_VERSION = "0.0.0.2"
+        self.PROGRAM_VERSION = "0.0.0.3"
         self.PROGRAM_DESCRIPTION = "An open-source command-line messaging platform"
         self.PROGRAM_BANNER = """\
         _ ___  _    ____    _  _ ____ ___  ____ 
@@ -107,7 +124,7 @@ class MainClass(object):
         else:
             self.logger.info("STARTED is True, skipping initialization...")
             
-    def initialize(self):
+    def initialize(self, prompt=None):
         """
         def initialize():
             Initialize the program.
@@ -115,12 +132,13 @@ class MainClass(object):
         
         self.logger.info("initialize() method called by {0}().".format(sys._getframe().f_back.f_code.co_name))
         if prompt is None:
-            prompt = self.PROGRAM_NAME
+            prompt = "Starting {0}...".format(self.PROGRAM_NAME)
             
         self.logger.info("User uses {0}.".format(platform.python_implementation()))
         if platform.python_implementation() != 'CPython':
             printer.Printer().print_with_status("You are not using CPython!", 1)
             printer.Printer().print_with_status("{0} in {1} is not yet tested. YOU MAY ENCOUNTER BUGS.".format(self.PROGRAM_NAME, platform.python_implementation()), 1)
+            time.sleep(1)
             
         pyversion = sys.version_info
         self.logger.info("User uses {0} v{1}.{2}.{3}".format(platform.python_implementation(), pyversion[0], pyversion[1], pyversion[2]))
@@ -128,6 +146,7 @@ class MainClass(object):
             printer.Printer().print_with_status("This version of python is not supported!", 1)
             printer.Printer().print_with_status("You have `v{0}.{1}.{2}`. To run {3}, you must have CPython `v3.6.0`.".format(
                 pyversion[0], pyversion[1], pyversion[2], self.PROGRAM_NAME), 1)
+            time.sleep(1)
             
             try:
                 sys.exit(7)
@@ -139,36 +158,36 @@ class MainClass(object):
             del pyversion
         
         self.logger.info("Getting program data...")
-        asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, "Starting {0}...".format(self.PROGRAM_NAME), "loading", 0.15)
+        asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, prompt, "loading", 0.15)
         # Get program data.
         # Get the list of IPs.
         self.logger.info("Getting IP list...")
         self.contact_list = config_handler.ConfigHandler(self.configfile).get("ip_list")
-        asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, "Starting {0}...".format(self.PROGRAM_NAME), "loading", 0.15)
+        asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, prompt, "loading", 0.15)
         # Get prompts
         # Main prompt
         self.logger.info("Getting main prompt...")
         self.prompt_main = config_handler.ConfigHandler(self.configfile).get("prompt_main")
-        asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, "Starting {0}...".format(self.PROGRAM_NAME), "loading", 0.15)
+        asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, prompt, "loading", 0.15)
         # Prompt when using Peer-to-Peer chat.
         self.logger.info("Getting peer-to-peer prompt...")
         self.prompt_p2p_chat = config_handler.ConfigHandler(self.configfile).get("prompt_p2p_chat")
-        asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, "Starting {0}...".format(self.PROGRAM_NAME), "loading", 0.15)
+        asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, prompt, "loading", 0.15)
         # Prompt when using Group Chat/Conference Room.
         self.logger.info("Getting group chat/conference room prompt...")
         self.prompt_gc_chat = config_handler.ConfigHandler(self.configfile).get("prompt_gc_chat")
-        asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, "Starting {0}...".format(self.PROGRAM_NAME), "loading", 0.15)
+        asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, prompt, "loading", 0.15)
         # Prompt when editing config files.
         self.logger.info("Getting settings/config panel prompt...")
         self.prompt_settings_panel = config_handler.ConfigHandler(self.configfile).get("prompt_settings_panel")
-        asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, "Starting {0}...".format(self.PROGRAM_NAME), "loading", 0.15)
+        asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, prompt, "loading", 0.15)
         # User details.
         self.logger.info("Getting username...")
         self.username = config_handler.ConfigHandler(self.configfile).get("username")
-        asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, "Starting {0}...".format(self.PROGRAM_NAME), "loading", 0.15)
+        asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, prompt, "loading", 0.15)
         self.logger.info("Getting userpass...")
         self.userpass = config_handler.ConfigHandler(self.configfile).get("userpass")
-        asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, "Starting {0}...".format(self.PROGRAM_NAME), "loading", 0.15)
+        asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, prompt, "loading", 0.15)
         self.logger.info("Getting user IP Address...")
         try:
             self.userip = requests.get('https://api.ipify.org/').text
@@ -181,9 +200,9 @@ class MainClass(object):
             self.userip = ""
             
         else:
-            self.logger.info("User's IP Address is `{0}`.".format(self.userip))
+            self.logger.info("User's IP Address is `{0}.{1}.{2}.{3}`.".format(self.userip.split('.')[0], '*' * len(str(self.userip.split('.')[1])), '*' * len(str(self.userip.split('.')[2])), self.userip.split('.')[3]))
             
-        asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, "Starting {0}...".format(self.PROGRAM_NAME), "loading", 0.15)
+        asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, prompt, "loading", 0.15)
         self.logger.info("Setting chat placeholders...")
         self.recvname = ""
         self.recvpass = ""
@@ -191,14 +210,14 @@ class MainClass(object):
         self.gcname = ""
         self.gcpass = ""
         self.gcip = ""
-        asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, "Starting {0}...".format(self.PROGRAM_NAME), "loading", 0.15)
+        asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, prompt, "loading", 0.15)
         self.logger.info("Setting latest traceback placeholder...")
         self.latest_traceback = ""
         self.latest_error_code = 0
-        asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, "Starting {0}...".format(self.PROGRAM_NAME), "loading", 0.15)
+        asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, prompt, "loading", 0.15)
         self.logger.info("Setting command placeholder...")
         self.command = ""
-        asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, "Starting {0}...".format(self.PROGRAM_NAME), "loading", 0.15)
+        asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, prompt, "loading", 0.15)
         self.logger.info("Setting main method loop...")
         self.byebye = False
         
@@ -244,8 +263,9 @@ class MainClass(object):
                         break
                     
                     elif first_run_ask.lower() == 'n':
+                        self.logger.info("User skipped first run wizard.")
                         printer.Printer().print_with_status("Type `first_run` in the main terminal to run this wizard.", 0)
-                        return 0
+                        return self.save_settings2config(True, "Anonymous", "", False, "None", "None", "None")
                     
                 except(KeyboardInterrupt, EOFError):
                     continue
@@ -253,7 +273,31 @@ class MainClass(object):
             while True:
                 try:
                     username = input("Username: ")
-                    break
+                    for char in username:
+                        if char.isalpha() or char.isdigit() or char == '_':
+                            approved = True
+                            continue
+                            
+                        else:
+                            approved = False
+                            continue
+                        
+                    if approved is True:
+                        pass
+                    
+                    else:
+                        self.logger.error("User entered an invalid username.")
+                        printer.Printer().print_with_status("Your username must consist of letters, numbers, or an underscore!", 2)
+                        continue
+                        
+                    if len(username) <= 6 or len(username) > 20:
+                        self.logger.error("User entered an invalid username.")
+                        printer.Printer().print_with_status("Your username must be atleast 6~20 characters!")
+                        continue
+                    
+                    else:
+                        self.logger.info("User entered an accepted username.")
+                        break
                     
                 except(KeyboardInterrupt, EOFError):
                     continue
@@ -261,11 +305,61 @@ class MainClass(object):
             while True:
                 try:
                     userpass = getpass("Password: ")
+                    self.logger.info("User created a new password.")
+                    if len(userpass) < 6:
+                        printer.Printer().print_with_status("Your password must be atleast 6 characters!")
+                        self.logger.error("User's password is not long enough.")
+                        continue
+                    
+                    else:
+                        self.logger.info("Checking for password strength....")
+                        if len(userpass) <= 8:
+                            print("Password Strength: Good")
+                            self.logger.info("Password Strength: Good")
+                            
+                        elif len(userpass) > 8 and len(userpass) <= 12:
+                            print("Password Strength: Better")
+                            self.logger.info("Password Strength: Better")
+                            
+                        elif len(userpass) > 12 and len(userpass) <= 18:
+                            print("Password Strength: Long enough")
+                            self.logger.info("Password Strength: Long Enough")
+                            
+                        else:
+                            print("Password Strength: That password is so strong!")
+                            self.logger.info("Password Strength: That password is so strong!")
+                            
+                        if userpass == username:
+                            print("You must not use your username as your password!")
+                            continue
+                        
+                        if userpass.isalpha():
+                            print("[SUGGESTION]: Your password must have numbers and symbols.")
+                            
+                        elif userpass.isdigit():
+                            print("[SUGGESTION]: Your password must have letters and symbols.")
+                            
+                        for char in userpass:
+                            if char in "[ !#$%&'()*+,-./[\\\]^_`{|}~\"]":
+                                symbol_only = True
+                                
+                            else:
+                                symbol_only = False
+                                
+                        if symbol_only is True:
+                            print("[SUGGESTION]: Your password must have letters and numbers.")
+                        
+                        del symbol_only
+                        
                     checkpass = getpass("Confirm Password: ")
+                    self.logger.info("User is confirming the password...")
                     if userpass == checkpass:
+                        userpass = self.hashit(userpass)
+                        self.logger.info("Both passwords matched!")
                         break
                     
                     else:
+                        self.logger.error("Both passwords does not match.")
                         printer.Printer().print_with_status("Both passwords does not match!", 2)
                         continue
                     
@@ -274,19 +368,26 @@ class MainClass(object):
 
             while True:
                 try:
+                    self.logger.info("Asking user if needs DDNS.")
                     print("Do you need a DDNS?")
                     print("(DDNS is usually used if you have a dynamic IP.)")
                     printer.Printer().print_with_status("For more info, search on your favorite search engine.", 0)
                     use_ddns = input("Answer (y/n): ")
                     if use_ddns.lower() == 'y':
+                        self.logger.info("User will need a DDNS.")
                         use_ddns = True
                         break
                         
                     elif use_ddns.lower() == 'n':
                         use_ddns = False
+                        ddns_provider = "None"
+                        ddns_domain = "None"
+                        ddns_token = "None"
+                        self.logger.info("User does not need a DDNS.")
                         break
                         
                     else:
+                        self.logger.info("Unknown answer.")
                         continue
                     
                 except(KeyboardInterrupt, EOFError):
@@ -298,20 +399,26 @@ class MainClass(object):
                 print()
                 while True:
                     try:
+                        self.logger.info("Asking user what DDNS provider we will use...")
                         ddns_provider = input("Please enter your DDNS Provider: ")
+                        self.logger.info("User entered `{0}`.".format(ddns_provider))
                         
                         if "duckdns" in  ddns_provider.lower():
+                            self.logger.info("DDNS Provider matched DuckDNS.org")
                             ddns_provider = "DuckDNS"
                             break
                             
                         elif "noip" in  ddns_provider.lower():
+                            self.logger.info("DDNS Provider matched noip.com")
                             ddns_provider = "noip"
                             break
                             
                         else:
+                            self.logger.info("DDNS Provider does not match to any supported DDNS Providers.")
                             continue
                         
                     except(TypeError, ValueError, EOFError, KeyboardInterrupt):
+                        self.latest_traceback = traceback.format_exc()
                         continue
                     
             else:
@@ -321,7 +428,9 @@ class MainClass(object):
                 if ddns_provider == "DuckDNS":
                     while True:
                         try:
+                            self.logger.info("Asking user for DuckDNS.org domain name...")
                             ddns_domain = input("Enter your DuckDNS.org domain name: ")
+                            self.logger.info("Asking user for DuckDNS.org token...")
                             ddns_token = getpass("Enter your DuckDNS.org token: ")
                             break
                             
@@ -331,8 +440,11 @@ class MainClass(object):
                 elif ddns_provider == "noip":
                     while True:
                         try:
+                            self.logger.info("Asking for noip.com domain name...")
                             ddns_domain = input("Enter your noip.com domain name: ")
+                            self.logger.info("Asking for noip.com username...")
                             ddns_username = input("Enter your noip.com username: ")
+                            self.logger.info("Asking for noip.com password...")
                             ddns_userpass = getpass("Enter your noip.com password: ")
                             ddns_token = ddns_username + ':::' + ddns_userpass
                             del ddns_username
@@ -343,16 +455,51 @@ class MainClass(object):
                             continue
                         
                 else:
+                    self.logger.error("use_ddns is True but no DDNS Provider matched!")
                     printer.Printer().print_with_status("Unknown DDNS provider!", 2)
                     return 6
                 
         except(TypeError, ValueError):
+            self.logger.error("An error occured when starting the First-run wizard.")
             printer.Printer().print_with_status("An error occured when starting the First-run wizard.", 2)
             self.latest_traceback = traceback.format_exc()
             return 10
         
         else:
-            total_items = 6
+            self.logger.info("Saving settings to configuration file...")
+            self.save_settings2config(True, username, userpass, use_ddns, ddns_provider, ddns_domain, ddns_token)
+            return 0
+        
+    def save_settings2config(self, load_settings=True, username="Anonymous", userpass="", use_ddns=None, ddns_provider=None, ddns_domain=None, ddns_token=None):
+        """
+        def save_settings2config():
+            Save settings to configuration file...
+            Well, the method name is self-explanatory...
+        """
+        
+        self.logger.info("save_settings2config() method called by {0}().".format(sys._getframe().f_back.f_code.co_name))
+            
+        # How many settings do we have to save?
+        total_items = 6
+        
+        """
+config.dat and real_config.dat contents:
+
+first_run              ::  `True` or `False`  ::  True is the program is not yet started. Otherwise, it is set to False.
+ip_list                ::  a string           ::  The path of the contact list file.
+username               ::  a string           ::  The user's username.
+userpass               ::  an SHA-1 hash      ::  The user's hashed password.
+prompt_main            ::  a string           ::  The string that will show in the main menu prompt.
+prompt_p2p_chat        ::  a string           ::  The string that will show when chatting with peers.
+prompt_gc_chat         ::  a string           ::  The string that will show when chatting on a conference room.
+prompt_settings_panel  ::  a string           ::  The string that will show when on the settings panel.
+ddns                   ::  `True` or `False`  ::  True if user uses a DDNS service. Otherwise, it is set to False.
+ddns_provider          ::  a string           ::  The DDNS provider's name.
+ddns_domain            ::  a string           ::  The user's DDNS domain given by the DDNS provider.
+ddns_token             ::  a string           ::  The user's DDNS token/API key/password given by the DDNS provider.
+        """
+        
+        try:
             asciigraphs.ASCIIGraphs().progress_bar_manual("Saving settings...", 0, total_items)
             config_handler.ConfigHandler(self.configfile).set("first_run", "False")
             asciigraphs.ASCIIGraphs().progress_bar_manual("Saving settings...", 1, total_items)
@@ -367,8 +514,26 @@ class MainClass(object):
             config_handler.ConfigHandler(self.configfile).set("ddns_domain", ddns_domain)
             asciigraphs.ASCIIGraphs().progress_bar_manual("Saving settings...", 6, total_items)
             config_handler.ConfigHandler(self.configfile).set("ddns_token", ddns_token)
-            self.initialize("Updating values...")
+            self.logger.info("Finished saving settings to configuration file!")
+            self.logger.info("Updating values...")
+            if load_settings is True:
+                self.initialize("Updating values...")
+                
             return 0
+            
+        except Exception as err:
+            self.latest_traceback = traceback.format_exc()
+            self.logger.error("An error occured while saving setting. (error on next log line.)")
+            self.logger.error(str(err))
+            return 1
+        
+    def hashit(self, string, cipher="sha256"):
+        """
+        def hashit():
+            Return the hash of the string.
+        """
+        
+        return self.simplelib.hash(string, cipher)
             
     def update_ddns_service(self):
         """
@@ -381,6 +546,7 @@ class MainClass(object):
             self.logger.info("Updating DDNS Service...")
             if self.ddns_provider == "DuckDNS":
                 try:
+                    self.logger.info("Updating DuckDNS.org Domain...")
                     duckdns_recv = requests.get("https://www.duckdns.org/update?domains={0}&token={1}&ip={2}&verbose=true".format(self.ddns_domain, self.ddns_token, self.userip)).text
                     duckdns_recv = duckdns_recv.split('\n')
                     # print(duckdns_recv)  # DEV0005
@@ -406,6 +572,7 @@ class MainClass(object):
                     
             elif self.ddns_provider == "noip":
                 try:
+                    self.logger.info("Updating noip.com Domain...")
                     no_ip_updater.update(self.ddns_token.partition(':::')[0], self.ddns_token.partition(':::')[2], self.ddns_domain, self.userip)
                     
                 except BaseException as error:
@@ -413,13 +580,14 @@ class MainClass(object):
                     self.logger.error("An error occured while updating DDNS.")
                     
             elif self.ddns_provider == "None":
+                self.logger.info("Skipping DDNS update, ddns_provider is None.")
                 pass
                     
             else:
                 self.logger.error("self.ddns_provider contains an unknown value: `{0}`".format(self.ddns_provider))
                                   
         else:
-            self.logger.info("User does not use DDNS service. Using IP address as the identity of user.")
+            self.logger.info("User does not use DDNS service. Using IP address as the identity of the user.")
         
     def substitute(self, string):
         """
@@ -427,11 +595,13 @@ class MainClass(object):
             Replace strings with the current value.
         """
         
+        string = str(string)
         self.logger.info("substitute() method called by {0}().".format(sys._getframe().f_back.f_code.co_name))
         result = string.replace("$USERNAME", self.username).replace("$USERIP", self.userip)
         result = result.replace("$RECVNAME", self.recvname).replace("$RECVIP", self.recvip)
         result = result.replace("$GCNAME", self.gcname).replace("$GCIP", self.gcip)
         
+        self.logger.info("Returning substituted string.")
         return result
     
     def help(self, what="main"):
@@ -442,6 +612,7 @@ class MainClass(object):
         
         self.logger.info("help() method called by {0}().".format(sys._getframe().f_back.f_code.co_name))
         if what == "main":
+            self.logger.info("Returning {0} help menu...".format(what))
             return """\
 help | ?                            Show this help menu.
 config | settings                   Access the Settings/Customization Panel.
@@ -449,9 +620,12 @@ update [OPTION]                     Update status of [OPTION]. (Type `update ?` 
 first_run                           Start the first-run wizard.
 clrscrn | cls | clr                 Clear the contents of the screen.
 
+trace                               Show the latest traceback.
+
 exit | quit | bye | shutdown        Quit {0}.""".format(self.PROGRAM_NAME)
 
         elif what == "config_panel":
+            self.logger.info("Returning {0} help menu...".format(what))
             return """\
 help | ?                    Show this help menu.
 show                        List configuration values.
@@ -463,13 +637,17 @@ clrscrn | cls | clr         Clear the contents of the screen.
 back                        Exit the Settings panel."""
 
         elif what == "update":
+            self.logger.info("Returning {0} help menu...".format(what))
             return """\
 help | ?        Show this help menu.
 ip              Update YOUR IP Address.
 """
 
         else:
-            raise ValueError("Unknown string is passed to help method.")
+            self.logger.error("Unknown string is passed to help method.")
+            printer.Printer("Unknown string is passed to help method!", 2)
+            input("Press enter to continue...")
+            return ""
     
     def parse_command(self, command):
         """
@@ -493,12 +671,22 @@ ip              Update YOUR IP Address.
             return self.update_status(command)
         
         elif command.lower().startswith(("first_run",)):
+            self.logger.info("Calling first_run() method...")
             return self.first_run()
         
         elif command.lower().startswith(("cls", "clear", "clr")):
+            self.logger.info("Clearing the contents of the screen.")
             self.simplelib.clrscrn()
+            return 0
+            
+        elif command.lower().startswith(("trace",)):
+            print("\nLATEST TRACEBACK:\n")
+            print(self.latest_traceback)
+            print()
+            return 0
 
         elif command.lower().startswith(("exit", "quit", "bye", "shutdown")):
+            self.logger.info("Setting byebye value to True.")
             self.byebye = True
             return 0
         
@@ -538,9 +726,9 @@ ip              Update YOUR IP Address.
                         elif line.startswith("first_run="):
                             continue
                         
-                        elif 'pass' in line.partition('=')[0]:
-                            printer.Printer().print_with_status("{0}: {1}".format(
-                                line.partition('=')[0], ('*' * len(line.partition('=')[2]))), 0)
+                        elif 'pass' in line.partition('=')[0] or 'token' in line.partition('=')[0]:
+                            printer.Printer().print_with_status("{0}: {1}".format(line.partition('=')[0],
+                                ('*' * len(line.partition('=')[2]))), 0)
                             
                         elif '=' in line:
                             printer.Printer().print_with_status(line.replace('=', ': '), 0)
@@ -559,7 +747,12 @@ ip              Update YOUR IP Address.
                         option = config_command[1]
                         value = config_command[2]
                         
+                        # If the user sets the userpass.
+                        if option == "userpass":
+                            value = self.hashit(value)
+                        
                     except IndexError:
+                        self.latest_traceback = traceback.format_exc()
                         self.logger.error("Cannot get option and value.")
                         printer.Printer().print_with_status("USAGE: set [OPTION] [VALUE]", 2)
                         continue
@@ -575,9 +768,10 @@ ip              Update YOUR IP Address.
                         continue
                                         
                     else:
-                        if 'pass' in option:
+                        if 'pass' in option or 'token' in option:
                             self.logger.info("Asking user to re-enter the value.")
                             value_verification = str(getpass("Please re-enter the value for `{0}`: ".format(option)))
+                            value_verification = self.hashit(value_verification)
                             if value_verification == value:
                                 del value_verification
                             
@@ -620,6 +814,7 @@ ip              Update YOUR IP Address.
                         option = config_command[1]
                         
                     except IndexError:
+                        self.latest_traceback = traceback.format_exc()
                         self.logger.error("Cannot get option and value.")
                         printer.Printer().print_with_status("USAGE: discard [OPTION]", 2)
                         continue
@@ -733,9 +928,13 @@ ip              Update YOUR IP Address.
                     return 3
                     
                 else:
-                    self.logger.info("User's IP Address is `{0}.{1}.{2}.{3}`.".format(self.userip.split('.')[0], len(str(self.userip.split('.')[1])), len(str(self.userip.split('.')[2])), self.userip.split('.')[3]))
-                    printer.Printer().print_with_status("Your IP Address is: `{0}`.".format(), 0)
+                    self.logger.info("User's IP Address is `{0}.{1}.{2}.{3}`.".format(self.userip.split('.')[0], '*' * len(str(self.userip.split('.')[1])), '*' * len(str(self.userip.split('.')[2])), self.userip.split('.')[3]))
+                    printer.Printer().print_with_status("Your IP Address is: `{0}.{1}.{2}.{3}`.".format(self.userip.split('.')[0], '*' * len(str(self.userip.split('.')[1])), '*' * len(str(self.userip.split('.')[2])), self.userip.split('.')[3]), 0)
                     return 0
+                
+            elif command[1].startswith(("ddns",)):
+                # DEV0003: Continue Dis!
+                pass
                 
             else:
                 self.logger.info("Unknown option/s supplied.")
@@ -743,6 +942,7 @@ ip              Update YOUR IP Address.
                 return 2
                 
         except IndexError:
+            self.latest_traceback = traceback.format_exc()
             self.logger.info("No options supplied.")
             printer.Printer().print_with_status("No option/s supplied. Type `update help` for more info.", 2)
             return 2
@@ -757,7 +957,48 @@ ip              Update YOUR IP Address.
         
         # Start the interactive shell.
         self.logger.info("Starting interactive shell...")
+        print(self.PROGRAM_BANNER)
+        print()
+        while True:
+            try:
+                if len(config_handler.ConfigHandler(self.configfile).get("userpass")) == 40:
+                    ask4pass = getpass("Please enter your password: ")
+                    if ask4pass == config_handler.ConfigHandler(self.configfile).get("userpass"):
+                        self.simplelib.clrscrn()
+                        break
+                    
+                    else:
+                        printer.Printer().print_with_status("You have entered an incorrect password!", 2)
+                        self.simplelib.pause()
+                        self.simplelib.clrscrn()
+                        continue
+                    
+                else:
+                    break
+                
+            except(KeyboardInterrupt, EOFError):
+                printer.Printer().print_with_status("You need to enter your password to decrypt your information.")
+                print("Do you really want to quit? (y/n)")
+                while True:
+                    try:
+                        quitconfirm = input("[Answer]: ")
+                        if quitconfirm.lower() == 'y':
+                            return 0
+                        
+                        elif quitconfirm.lower() == 'n':
+                            break
+                        
+                        else:
+                            continue
+                        
+                    except(KeyboardInterrupt, EOFError):
+                        return 1
+                
+            except Exception as err:
+                self.latest_traceback = traceback.format_exc()
+                continue
         
+        self.simplelib.clrscrn()
         print(self.PROGRAM_BANNER)
         print('"' + quote.quote() + '"')
         print()
