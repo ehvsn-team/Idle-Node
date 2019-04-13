@@ -159,10 +159,10 @@ class SimpleLib:
             platform = self.is_windows()
 
         if platform is False:
-            subprocess.call('clear')
+            subprocess.call('clear', shell=True)
 
         elif platform is True:
-            subprocess.call('cls')
+            subprocess.call('cls', shell=True)
 
         else:
             loop = 0

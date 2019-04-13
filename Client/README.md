@@ -1,39 +1,28 @@
-# Idle-Node v0.0.0.2
+# Idle-Node v0.0.0.3
 ## Copyright (C) 2019 :: EHVSN (Ethical Hackers vs Noobs)
 [Idle-Node](https://github.com/Catayao56/Idle-Node.git) is an open-source command-line messaging platform written in Python.
 
 ## What's new?
 + Fixed config_handler.py's save_config_file() method
     - Converting bytes to string before decoding,
-      Resulting to decoding error.
-
-+ Fixed config_handler.py's set() method
-    - No arguments/parameters are supplied when calling
-      save_config_file() method.
-
-    - config data are not split into lines.
-
-    - Too much newlines when writing to file.
-
-+ Fixed idle-node.py when there is no internet connection.
-    - Program now catches requests module exceptions.
-
-+ New command: `update`
-    - Manually update your current IP Address.
-
-+ New option rules when setting a new value
-    - When the string `pass` is in the option name,
-      The program will now ask you to re-enter the value.
-
-+ New option rules when showing all available option and their values.
-    - When the string `pass` is in the option name,
-      The value of the option will be hidden.
-
-+ Now, you will never see the "Goodbye!" message.
 
 ## Full Feature List
 + Peer-to-Peer Messaging
     - Using secure methods, Idle-Node can connect to a peer and send messages.
+
++ Server/Client Model for Conference and Group Chats
+    - Users can also use their own computers to be a server!
+    - Start a group chat. (also called conference.)
+    - Use the server as a centralized server.
+
++ WE ARE FOCUSED ON PRIVACY
+    - *No logs were sent to anyone* (except if you send us the log for fixing bugs.)
+    - *Immediately clear conversations* (The default option is set to ``True``.)
+    - This software connects to the following:
+    - 01. ``https://api.ipify.org`` (For getting machine's remote IP Address.)
+    - 02. ``https://www.duckdns.org`` (If you use this as your DDNS provider, Idle-Node will contact DuckDNS.org's server.)
+    - 03. ``gttps://www.noip.com`` (If you use this as your DDNS provider, Idle-Node will contact noip.com's server.)
+    - 04. ``Your recipient/chatroom`` (Self-explanatory...)
 
 ## License and Copying
 
