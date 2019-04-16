@@ -13,6 +13,7 @@ try:
     
     from getpass import getpass
     
+    # from core import aes
     from core import ansi
     from core import login
     from core import quote
@@ -50,7 +51,11 @@ Exit codes:
 5 = No module named <module>
 6 = Unknown DDNS provider.
 7 = Python version not supported.
+8 = DDNS record is not the same as the value in self.userip!
+9 = DDNS update Error
 10 = Unknown error occured.
+11 = self.ddns_provider contains an unknown value
+12 = Invalid configuration file (Config file is decrypted or corrupted)
 
 """
 
@@ -104,7 +109,7 @@ class MainClass(object):
         # Define program variables.
         self.logger.info("Defining program variables...")
         self.PROGRAM_NAME = "Idle-Node"
-        self.PROGRAM_VERSION = "0.0.0.3"
+        self.PROGRAM_VERSION = "0.0.0.4"
         self.PROGRAM_DESCRIPTION = "An open-source command-line messaging platform"
         self.PROGRAM_BANNER = """\
         _ ___  _    ____    _  _ ____ ___  ____ 
@@ -265,7 +270,7 @@ class MainClass(object):
                     elif first_run_ask.lower() == 'n':
                         self.logger.info("User skipped first run wizard.")
                         printer.Printer().print_with_status("Type `first_run` in the main terminal to run this wizard.", 0)
-                        return self.save_settings2config(True, "Anonymous", "", False, "None", "None", "None")
+                        return self.save_settings2config(True, "Anonymous{0}".format(random.randint(0, 10000)), "", False, "None", "None", "None")
                     
                 except(KeyboardInterrupt, EOFError):
                     continue
@@ -542,52 +547,64 @@ ddns_token             ::  a string           ::  The user's DDNS token/API key/
         """
         
         self.logger.info("update_ddns_service() method called by {0}().".format(sys._getframe().f_back.f_code.co_name))
-        if self.use_ddns is True:
+        if config_handler.ConfigHandler(self.configfile).get("ddns") is True:
             self.logger.info("Updating DDNS Service...")
-            if self.ddns_provider == "DuckDNS":
+            if config_handler.ConfigHandler(self.configfile).get("ddns_provider") == "DuckDNS":
                 try:
                     self.logger.info("Updating DuckDNS.org Domain...")
-                    duckdns_recv = requests.get("https://www.duckdns.org/update?domains={0}&token={1}&ip={2}&verbose=true".format(self.ddns_domain, self.ddns_token, self.userip)).text
+                    duckdns_recv = requests.get("https://www.duckdns.org/update?domains={0}&token={1}&ip={2}&verbose=true".format(
+                        config_handler.ConfigHandler(self.configfile).get("ddns_domain"),
+                        config_handler.ConfigHandler(self.configfile).get("ddns_token"),
+                        self.userip)).text
+                    
                     duckdns_recv = duckdns_recv.split('\n')
                     # print(duckdns_recv)  # DEV0005
                     if duckdns_recv[0] == "OK":
                         if duckdns_recv[1] == self.userip:
                             if duckdns_recv[3] == "UPDATED":
                                 self.logger.info("No problems are encountered when updating DDNS.")
+                                return 0
                                 
                             else:
                                 self.logger.warning("DuckDNS returns `NOCHANGE`. Record is not updated.")
+                                return 0
                                 
                         else:
                             self.logger.warning("DuckDNS record is not the same as the value in self.userip!")
+                            return 8
                             
                     else:
                         self.logger.error("KO! KO! DuckDNS replies.")
+                        return 9
                         
                 except(socket.gaierror, requests.packages.urllib3.exceptions.NewConnectionError,
                    requests.packages.urllib3.exceptions.MaxRetryError,
                    requests.exceptions.ConnectionError):
                     self.latest_traceback = traceback.format_exc()
                     self.logger.error("An error occured while updating DDNS.")
+                    return 10
                     
-            elif self.ddns_provider == "noip":
+            elif config_handler.ConfigHandler(self.configfile).get("ddns_provider") == "noip":
                 try:
                     self.logger.info("Updating noip.com Domain...")
-                    no_ip_updater.update(self.ddns_token.partition(':::')[0], self.ddns_token.partition(':::')[2], self.ddns_domain, self.userip)
+                    no_ip_updater.update(config_handler.ConfigHandler(self.configfile).get("ddns_token").partition(':::')[0], config_handler.ConfigHandler(self.configfile).get("ddns_token").partition(':::')[2], config_handler.ConfigHandler(self.configfile).get("ddns_domain"), self.userip)
                     
                 except BaseException as error:
                     self.latest_traceback = traceback.format_exc()
                     self.logger.error("An error occured while updating DDNS.")
+                    return 10
                     
-            elif self.ddns_provider == "None":
+            elif config_handler.ConfigHandler(self.configfile).get("ddns_provider") == "None":
                 self.logger.info("Skipping DDNS update, ddns_provider is None.")
-                pass
+                return 0
                     
             else:
-                self.logger.error("self.ddns_provider contains an unknown value: `{0}`".format(self.ddns_provider))
+                self.logger.error("self.ddns_provider contains an unknown value: `{0}`".format(config_handler.ConfigHandler(self.configfile).get("ddns_provider")))
+                return 11
                                   
         else:
             self.logger.info("User does not use DDNS service. Using IP address as the identity of the user.")
+            return 0
         
     def substitute(self, string):
         """
@@ -629,7 +646,7 @@ exit | quit | bye | shutdown        Quit {0}.""".format(self.PROGRAM_NAME)
             return """\
 help | ?                    Show this help menu.
 show                        List configuration values.
-set [OPTION] [VALUE]        Set the value for `OPTION`.
+set [OPTION] [VALUE]        Set the value for `OPTION`. (NOTE: DO NOT ENTER VALUE WHEN SETTING PASSWORD!)
 discard [OPTION]            Discard changes made to `OPTION`.
 save                        Save current settings to configuration file.
 clrscrn | cls | clr         Clear the contents of the screen.
@@ -641,6 +658,7 @@ back                        Exit the Settings panel."""
             return """\
 help | ?        Show this help menu.
 ip              Update YOUR IP Address.
+ddns            Update YOUR DDNS domain. (If you use one.)
 """
 
         else:
@@ -745,12 +763,12 @@ ip              Update YOUR IP Address.
                     try:
                         self.logger.info("Getting option and its value...")
                         option = config_command[1]
-                        value = config_command[2]
-                        
-                        # If the user sets the userpass.
-                        if option == "userpass":
-                            value = self.hashit(value)
-                        
+                        try:
+                            value = config_command[2]
+                            
+                        except(IndexError):
+                            value = "None"
+                                                
                     except IndexError:
                         self.latest_traceback = traceback.format_exc()
                         self.logger.error("Cannot get option and value.")
@@ -768,9 +786,19 @@ ip              Update YOUR IP Address.
                         continue
                                         
                     else:
-                        if 'pass' in option or 'token' in option:
+                        if 'pass' in option:
+                            old_value = str(getpass("Enter the old value for `{0}`: ".format(option)))
+                            if self.hashit(old_value) == config_handler.ConfigHandler(self.configfile).get("userpass"):
+                                pass
+                            
+                            else:
+                                printer.Printer().print_with_status("Both values does not match!", 2)
+                                continue
+                            
+                            value = getpass("Please enter your new value for `{0}`: ".format(option))
+                            del old_value
                             self.logger.info("Asking user to re-enter the value.")
-                            value_verification = str(getpass("Please re-enter the value for `{0}`: ".format(option)))
+                            value_verification = str(getpass("Please re-enter your new value for `{0}`: ".format(option)))
                             value_verification = self.hashit(value_verification)
                             if value_verification == value:
                                 del value_verification
@@ -885,7 +913,27 @@ ip              Update YOUR IP Address.
                     self.simplelib.clrscrn()
                     
                 elif config_command.lower().startswith(("back",)):
-                    return 0
+                    if config_lines != config_handler.ConfigHandler(self.configfile).get():
+                        printer.Printer().print_with_status("You have made changes to the settings!", 1)
+                        while True:
+                            try:
+                                askIfSave = input("Go back and save changes? (y/n) > ")
+                                
+                            except(TypeError, ValueError, KeyboardInterrupt, EOFError):
+                                continue
+                            
+                            else:
+                                if askIfSave.lower() == 'y':
+                                    break
+                                
+                                elif askIfSave.lower() == 'n':
+                                    return 0
+                                
+                                else:
+                                    continue
+                                
+                    else:
+                        return 0
                     
                 else:
                     self.logger.info("Unknown command entered.")
@@ -933,7 +981,24 @@ ip              Update YOUR IP Address.
                     return 0
                 
             elif command[1].startswith(("ddns",)):
-                # DEV0003: Continue Dis!
+                self.logger.info("Updating user DDNS...")
+                upddns = self.update_ddns_service()
+                if upddns == 0:
+                    printer.Printer().print_with_status("DDNS domain successfully updated!", 0)
+                    
+                elif upddns == 8:
+                    printer.Printer().print_with_status("DDNS record is not the same as the value in self.userip!", 1)
+                    
+                elif upddns == 9:
+                    printer.Printer().print_with_status("An error occured when updating DDNS domain.", 2)
+                    
+                elif upddns == 11:
+                    printer.Printer().print_with_status("The key `ddns_provider` contains an unknown value!", 2)
+                    printer.Printer().print_with_status("The DDNS provider ({0}) might not be supported by {1}.".format(
+                        config_handler.ConfigHandler(self.configfile).get("ddns_provider"), self.PROGRAM_NAME), 2)
+                    
+                else:
+                    printer.Printer().print_with_status("Program cannot determine the success of the DDNS update.", 1)
                 pass
                 
             else:
@@ -961,8 +1026,8 @@ ip              Update YOUR IP Address.
         print()
         while True:
             try:
-                if len(config_handler.ConfigHandler(self.configfile).get("userpass")) == 40:
-                    ask4pass = getpass("Please enter your password: ")
+                if len(config_handler.ConfigHandler(self.configfile).get("userpass")) != "changemepls":
+                    ask4pass = self.hashit(getpass("Please enter your password: "))
                     if ask4pass == config_handler.ConfigHandler(self.configfile).get("userpass"):
                         self.simplelib.clrscrn()
                         break
