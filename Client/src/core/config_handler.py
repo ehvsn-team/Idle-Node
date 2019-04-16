@@ -6,6 +6,8 @@ import sys
 import time
 import base64
 
+# from core import aes
+
 class ConfigHandler:
     """
     class ConfigHandler():
@@ -19,6 +21,7 @@ class ConfigHandler:
         """
         
         self.config_path = config_path
+        # self.cipher = aes.AESCipher()
 
     def _open_config_file(self):
         """
@@ -32,12 +35,22 @@ class ConfigHandler:
 
         except(FileNotFoundError, IOError, EOFError,
                 PermissionError, IsADirectoryError):
-            return IOError("Error reading the configuration file!")
+            raise IOError("Error reading the configuration file!")
 
         else:
             # print(data)  # DEV0005
-            data = base64.b64decode(data)
-            return str(data.decode())
+            try:
+                data = base64.b64decode(data)
+                
+            except(TypeError, ValueError, UnicodeDecodeError):
+                raise IOError("The configuration file is corrupt or decrypted!")
+            
+            else:
+                try:
+                    return str(data.decode())
+                
+                except(TypeError, ValueError,UnicodeDecodeError):
+                    raise IOError("The configuration file is corrupt or decrypted!")
 
     def _save_config_file(self, config_data):
         """
@@ -51,7 +64,7 @@ class ConfigHandler:
                 
         except(FileNotFoundError, IOError, EOFError,
                PermissionError, IsADirectoryError):
-            return IOError("Error writing to the configuration file!")
+            raise IOError("Error writing to the configuration file!")
         
         else:
             try:
@@ -60,7 +73,7 @@ class ConfigHandler:
                 
             except(FileNotFoundError, IOError, EOFError,
                    PermissionError, IsADirectoryError):
-                return IOError("Error writing to the configuration file!")
+                raise IOError("Error writing to the configuration file!")
             
             else:
                 return 0
@@ -72,12 +85,14 @@ class ConfigHandler:
         """
         
         contents = self._open_config_file()
+                    
         if data is None:
             return contents.split('\n')
         
         else:
             # print(contents)  # DEV0005
             contents = contents.split('\n')
+
             for content in contents:
                 # print(content)  # DEV0005
                 if content.startswith('#'):

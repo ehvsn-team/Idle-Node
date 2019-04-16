@@ -1,4 +1,4 @@
-# Idle-Node v0.0.0.3
+# Idle-Node v0.0.0.4
 ## Copyright (C) 2019 :: EHVSN (Ethical Hackers vs Noobs)
 [Idle-Node](https://github.com/Catayao56/Idle-Node.git) is an open-source command-line messaging platform written in Python.
 
