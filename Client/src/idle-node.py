@@ -5,6 +5,7 @@ try:
     import os
     import sys
     import time
+    import random
     import platform
     import traceback
     
@@ -205,7 +206,7 @@ class MainClass(object):
             self.userip = ""
             
         else:
-            self.logger.info("User's IP Address is `{0}.{1}.{2}.{3}`.".format(self.userip.split('.')[0], '*' * len(str(self.userip.split('.')[1])), '*' * len(str(self.userip.split('.')[2])), self.userip.split('.')[3]))
+            self.logger.info("User's IP Address is `{0}`.".format(self.userip))
             
         asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, prompt, "loading", 0.15)
         self.logger.info("Setting chat placeholders...")
@@ -311,51 +312,12 @@ class MainClass(object):
                 try:
                     userpass = getpass("Password: ")
                     self.logger.info("User created a new password.")
-                    if len(userpass) < 6:
-                        printer.Printer().print_with_status("Your password must be atleast 6 characters!")
-                        self.logger.error("User's password is not long enough.")
-                        continue
+                    if self.check_password(userpass) == 0:
+                        pass
                     
                     else:
-                        self.logger.info("Checking for password strength....")
-                        if len(userpass) <= 8:
-                            print("Password Strength: Good")
-                            self.logger.info("Password Strength: Good")
-                            
-                        elif len(userpass) > 8 and len(userpass) <= 12:
-                            print("Password Strength: Better")
-                            self.logger.info("Password Strength: Better")
-                            
-                        elif len(userpass) > 12 and len(userpass) <= 18:
-                            print("Password Strength: Long enough")
-                            self.logger.info("Password Strength: Long Enough")
-                            
-                        else:
-                            print("Password Strength: That password is so strong!")
-                            self.logger.info("Password Strength: That password is so strong!")
-                            
-                        if userpass == username:
-                            print("You must not use your username as your password!")
-                            continue
-                        
-                        if userpass.isalpha():
-                            print("[SUGGESTION]: Your password must have numbers and symbols.")
-                            
-                        elif userpass.isdigit():
-                            print("[SUGGESTION]: Your password must have letters and symbols.")
-                            
-                        for char in userpass:
-                            if char in "[ !#$%&'()*+,-./[\\\]^_`{|}~\"]":
-                                symbol_only = True
-                                
-                            else:
-                                symbol_only = False
-                                
-                        if symbol_only is True:
-                            print("[SUGGESTION]: Your password must have letters and numbers.")
-                        
-                        del symbol_only
-                        
+                        continue
+                    
                     checkpass = getpass("Confirm Password: ")
                     self.logger.info("User is confirming the password...")
                     if userpass == checkpass:
@@ -606,6 +568,62 @@ ddns_token             ::  a string           ::  The user's DDNS token/API key/
             self.logger.info("User does not use DDNS service. Using IP address as the identity of the user.")
             return 0
         
+    def check_password(self, password, username=None):
+        """
+        def check_password():
+            Check the password and give suggestions.
+        """
+        
+        if username is None:
+            username = self.username
+        
+        if len(password) < 6:
+            printer.Printer().print_with_status("Your password must be atleast 6 characters!")
+            self.logger.error("User's password is not long enough.")
+            return 1
+        
+        else:
+            self.logger.info("Checking for password strength....")
+            if len(password) <= 8:
+                print("Password Strength: Good")
+                self.logger.info("Password Strength: Good")
+                
+            elif len(password) > 8 and len(password) <= 12:
+                print("Password Strength: Better")
+                self.logger.info("Password Strength: Better")
+                
+            elif len(password) > 12 and len(password) <= 18:
+                print("Password Strength: Long enough")
+                self.logger.info("Password Strength: Long Enough")
+                
+            else:
+                print("Password Strength: That password is so strong!")
+                self.logger.info("Password Strength: That password is so strong!")
+                
+            if password == username:
+                print("You must not use your username as your password!")
+                return 2
+            
+            if password.isalpha():
+                print("[SUGGESTION]: Your password must have numbers and symbols.")
+                
+            elif password.isdigit():
+                print("[SUGGESTION]: Your password must have letters and symbols.")
+                
+            for char in password:
+                if char in "[ !#$%&'()*+,-./[\\\]^_`{|}~\"]":
+                    symbol_only = True
+                    
+                else:
+                    symbol_only = False
+                
+            if symbol_only is True:
+                print("[SUGGESTION]: Your password must have letters and numbers.")
+            
+            del symbol_only
+            
+        return 0
+        
     def substitute(self, string):
         """
         def substitute():
@@ -787,19 +805,25 @@ ddns            Update YOUR DDNS domain. (If you use one.)
                                         
                     else:
                         if 'pass' in option:
-                            old_value = str(getpass("Enter the old value for `{0}`: ".format(option)))
-                            if self.hashit(old_value) == config_handler.ConfigHandler(self.configfile).get("userpass"):
-                                pass
-                            
-                            else:
-                                printer.Printer().print_with_status("Both values does not match!", 2)
-                                continue
+                            if len(config_handler.ConfigHandler(self.configfile).get("userpass")) != 0:
+                                old_value = str(getpass("Enter the old value for `{0}`: ".format(option)))
+                                if self.hashit(old_value) == config_handler.ConfigHandler(self.configfile).get("userpass"):
+                                    pass
+                                
+                                else:
+                                    printer.Printer().print_with_status("Both values does not match!", 2)
+                                    continue
+                                
+                                del old_value
                             
                             value = getpass("Please enter your new value for `{0}`: ".format(option))
-                            del old_value
+                            if self.check_password(value) != 0:
+                                continue
+                            
+                            value = self.hashit(value)
+                            
                             self.logger.info("Asking user to re-enter the value.")
-                            value_verification = str(getpass("Please re-enter your new value for `{0}`: ".format(option)))
-                            value_verification = self.hashit(value_verification)
+                            value_verification = self.hashit(str(getpass("Please re-enter your new value for `{0}`: ".format(option))))
                             if value_verification == value:
                                 del value_verification
                             
@@ -976,15 +1000,19 @@ ddns            Update YOUR DDNS domain. (If you use one.)
                     return 3
                     
                 else:
-                    self.logger.info("User's IP Address is `{0}.{1}.{2}.{3}`.".format(self.userip.split('.')[0], '*' * len(str(self.userip.split('.')[1])), '*' * len(str(self.userip.split('.')[2])), self.userip.split('.')[3]))
-                    printer.Printer().print_with_status("Your IP Address is: `{0}.{1}.{2}.{3}`.".format(self.userip.split('.')[0], '*' * len(str(self.userip.split('.')[1])), '*' * len(str(self.userip.split('.')[2])), self.userip.split('.')[3]), 0)
+                    self.logger.info("User's IP Address is `{0}`.".format(self.userip))
+                    printer.Printer().print_with_status("Your IP Address is: `{0}".format(self.userip), 0)
                     return 0
                 
             elif command[1].startswith(("ddns",)):
                 self.logger.info("Updating user DDNS...")
                 upddns = self.update_ddns_service()
                 if upddns == 0:
-                    printer.Printer().print_with_status("DDNS domain successfully updated!", 0)
+                    if config_handler.ConfigHandler(self.configfile).get("ddns") is True:
+                        printer.Printer().print_with_status("DDNS domain successfully updated!", 0)
+                        
+                    else:
+                        printer.Printer().print_with_status("You are not using a DDNS service, nothing changed!", 1)
                     
                 elif upddns == 8:
                     printer.Printer().print_with_status("DDNS record is not the same as the value in self.userip!", 1)
@@ -1026,7 +1054,7 @@ ddns            Update YOUR DDNS domain. (If you use one.)
         print()
         while True:
             try:
-                if len(config_handler.ConfigHandler(self.configfile).get("userpass")) != "changemepls":
+                if len(config_handler.ConfigHandler(self.configfile).get("userpass")) != 0:
                     ask4pass = self.hashit(getpass("Please enter your password: "))
                     if ask4pass == config_handler.ConfigHandler(self.configfile).get("userpass"):
                         self.simplelib.clrscrn()
@@ -1035,7 +1063,7 @@ ddns            Update YOUR DDNS domain. (If you use one.)
                     else:
                         printer.Printer().print_with_status("You have entered an incorrect password!", 2)
                         self.simplelib.pause()
-                        self.simplelib.clrscrn()
+                        # self.simplelib.clrscrn()
                         continue
                     
                 else:
@@ -1089,7 +1117,13 @@ ddns            Update YOUR DDNS domain. (If you use one.)
                 
         else:
             self.logger.info("byebye is True, now quitting...")
-            print(quote.quote())
+            random_bye = ["Change your password regularly!",
+                          "No Man-in-the-Middle!", "RSA and AES FTW!",
+                          "Goodbye!"]
+            if random.randint(0, 100) > 70:
+                random_bye = []
+                
+            print(quote.quote(random_bye))
             return 0
 
 # If running independently, run main() function.
