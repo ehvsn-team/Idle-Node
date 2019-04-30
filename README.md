@@ -51,11 +51,11 @@
 + Internet Connection.
 + Python Interpreter version 3.6+.
 + Dependencies
-	* Dependencies can be installed automatically in the program. (Needs Internet Connection)
+	* Dependencies can be installed automatically in the program.
 
 ## Installing & Running
 ------------------------
 1.Questions? Feature requests? Bugs?
       
-      -Just contact us and we'll respond as soon as possible.
-      -You can also create a merge request on https://github.com/Idle-Node.git
+      - Just contact us and we'll respond as soon as possible.
+      - You can also create a merge request on https://github.com/Idle-Node.git
