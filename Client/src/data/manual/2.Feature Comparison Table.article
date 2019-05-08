@@ -1,0 +1,46 @@
+`X` = Yes     ` ` = No
+
+Features     | Signal | Skype   | Telegram | Viber | Whatsapp | <PROGRAM_NAME>
+
+Encrypted in |        |         |          |       |          |
+   transit?  |   X    |   X     |    X     |   X   |    X     |      X 
+             |        |         |          |       |          |
+Encrypted so |        |         |          |       |          |
+the provider |   X    |         |    X     |       |    X     |      X 
+can't read?  |        |         |          |       |          |
+             |        |         |          |       |          |
+   Can you   |        |         |          |       |          |
+  verify the |   X    |         |    X     |       |    X     |      X
+ recipient's |        |         |          |       |          |
+  identity?  |        |         |          |       |          |
+             |        |         |          |       |          |
+Are past     |        |         |          |       |          |
+conversations|        |         |          |       |          |
+secure if    |   X    |         |    X     |       |    X     |      X
+your keys and|        |         |          |       |          |
+passwords are|        |         |          |       |          |
+stolen?      |        |         |          |       |          |
+             |        |         |          |       |          |
+Is the code  |        |         |          |       |          |
+  open to    |   X    |         |    X     |       |          |      X
+independent  |        |         |          |       |          |
+  review?    |        |         |          |       |          |
+             |        |         |          |       |          |
+   Is the    |        |         |          |       |          |
+  security   |        |         |          |       |          |
+   design    |   X    |         |    X     |       |    X     |      X
+   properly  |        |         |          |       |          |
+ documented? |        |         |          |       |          |
+             |        |         |          |       |          |
+  Has there  |        |         |          |       |          |
+ been recent |   X    |         |    X     |   X   |    X     |      X 
+ code audit? |        |         |          |       |          |
+             |        |         |          |       |          |
+   Cross/    |        |         |          |       |          |
+   Multi-    |   X    |   X     |    X     |   X   |    X     |      X 
+   platform? |        |         |          |       |          |
+             |        |         |          |       |          |
+  Available  |        |         |          |       |          |
+ Interfaces: | Web    | Web, GUI| Web, GUI | GUI   | GUI      | Web, GUI, CLI
+             |        |         |          |       |          |
+ 

@@ -188,14 +188,14 @@ def run():
 
     if newenv:
         # Write pipeline here if you will use virtual environment.
-        setup = ['dir', 'xcopy ..\src .\Idle-Node /O /X /E /H /K /Y', 'dir', 'cd Idle-Node', 'echo %cd%']
-        test = ['python idle-node.py --test']
-        cleanup = ['cd ..', 'rmdir Idle-Node /s']
+        setup = ['dir', 'xcopy ..\src .\Idle-Node /O /X /E /H /K /Y /I', 'dir', 'cd Idle-Node', 'echo %cd%']
+        test = ['python idle-node.py']
+        cleanup = ['cd ..', 'rmdir Idle-Node /s /q']
 
     else:
         # Write pipeline here if you will NOT use virtual environment.
         setup = ['dir', 'cd src', 'echo %cd%']
-        test = ['python idle-node.py --test']
+        test = ['python idle-node.py']
         cleanup = []
 
     print("{0} Activated switches: {1} {2}".format(sys.argv[0],

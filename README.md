@@ -1,23 +1,71 @@
-# Idle-Node v0.0.0.4
+# Idle-Node v0.0.0.5
 ## Copyright (C) 2019 :: EHVSN (Ethical Hackers vs Noobs)
-[Idle-Node](https://github.com/Catayao56/Idle-Node.git) is an open-source command-line messaging platform written in Python.
+[Idle-Node](https://github.com/Catayao56/Idle-Node.git) is an open-source decentralized messaging platform written in Python.
 
 ## What's new?
++ Cipher modules now in core/Ciphers Folder.
+
++ Command-line arguments now functional.
+
++ More goodbye messages!
+
++ Removed manual module. (Will be back sooner or later)
+
++ The most recent supported python version is `v3.4.4`.
+    - Idle-Node will now just warn the user when using python version 3.4.4
+
 + Fixed config_handler.py's save_config_file() method
     - Converting bytes to string before decoding,
 
++ [WIP] Idle-Node TestCase() class for testing Idle-Node.
+
++ [WIP] Contacts Manager (`contacts` and `cntcts` commands)
+
 ## Full Feature List
 + Peer-to-Peer Messaging
-    - Using secure methods, Idle-Node can connect to a peer and send messages.
+    - Using secure (or optionally, insecure) methods,
+      Idle-Node can connect to a peer and send messages.
 
 + Server/Client Model for Conference and Group Chats
     - Users can also use their own computers to be a server!
     - Start a group chat. (also called conference.)
     - Use the server as a centralized server.
 
++ Verify peer or server's identity
+    - Use several methods to identify a peer/server, like TOFU (Trust on First Use),
+      One-time passwords, and more. (See manual for more info)
+
++ No conversation logs
+    - By default, Idle-Node does not store conversations. So when both of you
+      disconnects, no logs will be saved. No evidence are saved :p
+
++ Open-Sourced
+    - You can look and/or modify the source code to suit your needs.
+      Make Idle-Node accept connections from specific IPs, support GUI, add more APIs,
+      and more. (See manual for more info)
+
++ Add custom ciphers
+    - You can **add your own encryption method**! Just place the python file with
+      encryption and decryption method in the IdleCipher() class into the
+      core/Ciphers path.
+
++ Documented Security Design
+    - You want to know how Idle-Node works? Type `manual` in the main Idle-Node
+      terminal and read the articles you need. You might have a new friend while
+      searching for articles there...
+
++ Multiplatform
+    - As long as there is Internet connection, Python 3.6+, and dependencies in your 
+      machine, you can run Idle-Node!
+
++ Lots of available interfaces
+    - While other closed-source (or even open-sourced) programs offer only GUI or web
+      interfaces, Idle-Node supports three (3) interfaces: CLI, GUI, and Web\*!
+      (\*For servers only)
+
 + WE ARE FOCUSED ON PRIVACY
-    - *No logs were sent to anyone* (except if you send us the log for fixing bugs.)
-    - *Immediately clear conversations* (The default option is set to ``True``.)
+    - **No logs are sent to anyone** (except if you send us the log for fixing bugs.)
+    - **Immediately clear conversations** (The default option is set to ``True``.)
     - This software connects to the following:
     - 01. ``https://api.ipify.org`` (For getting machine's remote IP Address.)
     - 02. ``https://www.duckdns.org`` (If you use this as your DDNS provider, Idle-Node will contact DuckDNS.org's server.)
@@ -46,12 +94,21 @@
 * Development Team
     + Developer: [Catayao56](https://github.com/Catayao56)
     + Security Researcher: [Steffan (Aeneas of Troy)](https://github.com/aeneasoftroy)
+    + The Ethical Hackers vs Noobs (EHVSN) Team
 
-## Requirements
-+ Internet Connection.
-+ Python Interpreter version 3.6+.
+## Minimum Requirements
++ Internet Connection
++ Python Interpreter version 3.4.4
 + Dependencies
-	* Dependencies can be installed automatically in the program. (Needs Internet Connection)
+  * requests
+  * pycryptodome
+
+## Recommended Requirements
++ Internet Connection.
++ Python Interpreter version 3.6.0+.
++ Dependencies
+  * requests
+  * pycryptodome
 
 ## Installing & Running
 ------------------------

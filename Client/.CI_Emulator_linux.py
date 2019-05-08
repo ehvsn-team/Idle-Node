@@ -189,13 +189,13 @@ def run():
     if newenv:
         # Write pipeline here if you will use virtual environment.
         setup = ['ls', 'cp -r ../src ./Idle-Node', 'ls', 'cd Idle-Node', 'pwd']
-        test = ['python3 idle-node.py --test']
+        test = ['python3 idle-node.py']
         cleanup = ['cd ..', 'rm -rf Idle-Node/']
 
     else:
         # Write pipeline here if you will NOT use virtual environment.
         setup = ['ls', 'cd src', 'pwd']
-        test = ['python3 idle-node.py --test']
+        test = ['python3 idle-node.py']
         cleanup = []
 
     print("{0} Activated switches: {1} {2}".format(sys.argv[0],
