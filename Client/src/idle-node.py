@@ -7,6 +7,7 @@ try:
     import time
     import random
     import platform
+    import importlib
     import traceback
     
     import socket
@@ -14,7 +15,9 @@ try:
     
     from getpass import getpass
     
-    # from core import aes
+    # DEV0004: For encrypting and decrypting
+    # from core.Cipher import aes
+    # from core.Cipher import rsa
     from core import ansi
     from core import login
     from core import quote
@@ -24,7 +27,14 @@ try:
     from core import printer
     from core import simplelib
     from core import asciigraphs
+    from core import comms_manager
     from core import config_handler
+
+    # Modules from other sources that is not available
+    # on Python repository
+
+    # By kelvinss (source: https://github.com/kelvinss/no-ip-updater)
+    from core import no_ip_updater
 
 except ImportError:
     # Prints if error is encountered while importing modules.
@@ -57,6 +67,9 @@ Exit codes:
 10 = Unknown error occured.
 11 = self.ddns_provider contains an unknown value
 12 = Invalid configuration file (Config file is decrypted or corrupted)
+13 = Unknown command-line argument
+
+14 = peer/recipient/server is online, but refused to connect.
 
 """
 
@@ -77,13 +90,36 @@ ddns_domain            ::  a string           ::  The user's DDNS domain given b
 ddns_token             ::  a string           ::  The user's DDNS token/API key/password given by the DDNS provider.
 """
 
+class TestCase(object):
+    """
+    class TestCase():
+        The test class for <module>.
+
+    """
+
+    def __init__(self):
+        """
+        def __init__(self):
+            The initialization method of TestCase() class.
+
+        """
+
+        pass
+
+    def main(self):
+        self.testMainClass()
+        return 0
+
+    def testMainClass(self):
+        return 0
+
 class MainClass(object):
     """
     MainClass():
         This is the main class of the program.
     """
     
-    def __init__(self):
+    def __init__(self, kwargs):
         """
         def __init__():
             This is the initialization method of MainClass() class.
@@ -95,7 +131,7 @@ class MainClass(object):
         
         # Start the logger.
         self.logger = logger.LoggingObject(
-                name='ArchariosFramework',
+                name='Idle-Node',
                 logfile=self.logfile
                 )
         
@@ -110,8 +146,8 @@ class MainClass(object):
         # Define program variables.
         self.logger.info("Defining program variables...")
         self.PROGRAM_NAME = "Idle-Node"
-        self.PROGRAM_VERSION = "0.0.0.4"
-        self.PROGRAM_DESCRIPTION = "An open-source command-line messaging platform"
+        self.PROGRAM_VERSION = "0.0.0.5"
+        self.PROGRAM_DESCRIPTION = "An open-source decentralized messaging platform"
         self.PROGRAM_BANNER = """\
         _ ___  _    ____    _  _ ____ ___  ____ 
         | |  \ |    |___ __ |\ | |  | |  \ |___ 
@@ -125,12 +161,16 @@ class MainClass(object):
         self.logger.info("Checking if STARTED is False...")
         if STARTED is False:
             self.logger.info("STARTED is False, calling initialize() method...")
-            self.initialize()
+            self.logger.info("Getting command-line arguments...")
+            self.arguments = {}
+            self.arguments["override_pyvercheck"] = kwargs.get("override_pyvercheck", False)
+            self.arguments["debug_mode"] = kwargs.get("debug_mode", False)
+            self.initialize(None, kwargs)
             
         else:
             self.logger.info("STARTED is True, skipping initialization...")
             
-    def initialize(self, prompt=None):
+    def initialize(self, prompt=None, kwargs={}):
         """
         def initialize():
             Initialize the program.
@@ -139,29 +179,39 @@ class MainClass(object):
         self.logger.info("initialize() method called by {0}().".format(sys._getframe().f_back.f_code.co_name))
         if prompt is None:
             prompt = "Starting {0}...".format(self.PROGRAM_NAME)
+
+        self.logger.info("Evaluating command-line arguments...")
+        if self.arguments["debug_mode"] is True:
+            self.logger.enable_logging()
             
         self.logger.info("User uses {0}.".format(platform.python_implementation()))
-        if platform.python_implementation() != 'CPython':
-            printer.Printer().print_with_status("You are not using CPython!", 1)
-            printer.Printer().print_with_status("{0} in {1} is not yet tested. YOU MAY ENCOUNTER BUGS.".format(self.PROGRAM_NAME, platform.python_implementation()), 1)
-            time.sleep(1)
+        self.logger.debug("self.arguments['override_pyvercheck']: {0}".format(self.arguments['override_pyvercheck']))
+        if self.arguments['override_pyvercheck'] is False:
+            if platform.python_implementation() != 'CPython':
+                printer.Printer().print_with_status("You are not using CPython!", 1)
+                printer.Printer().print_with_status("{0} in {1} is not yet tested. YOU MAY ENCOUNTER BUGS.".format(self.PROGRAM_NAME, platform.python_implementation()), 1)
+                time.sleep(1)
             
-        pyversion = sys.version_info
-        self.logger.info("User uses {0} v{1}.{2}.{3}".format(platform.python_implementation(), pyversion[0], pyversion[1], pyversion[2]))
-        if pyversion[0] < 3 or pyversion[1] < 6 or pyversion[2] < 0:
-            printer.Printer().print_with_status("This version of python is not supported!", 1)
-            printer.Printer().print_with_status("You have `v{0}.{1}.{2}`. To run {3}, you must have CPython `v3.6.0`.".format(
-                pyversion[0], pyversion[1], pyversion[2], self.PROGRAM_NAME), 1)
-            time.sleep(1)
-            
-            try:
-                sys.exit(7)
+            pyversion = sys.version_info
+            self.logger.info("User uses {0} v{1}.{2}.{3}".format(platform.python_implementation(), pyversion[0], pyversion[1], pyversion[2]))
+            if pyversion[0] < 3 and pyversion[1] < 4 and pyversion[2] < 4:
+                printer.Printer().print_with_status("This version of python is not supported!", 1)
+                printer.Printer().print_with_status("You have `v{0}.{1}.{2}`. To run {3}, you must have CPython `v3.6.0`.".format(
+                    pyversion[0], pyversion[1], pyversion[2], self.PROGRAM_NAME), 1)
+                time.sleep(1)
                 
-            except SystemExit:
-                os._exit(7)
-        
-        else:
-            del pyversion
+                try:
+                    sys.exit(7)
+                    
+                except SystemExit:
+                    os._exit(7)
+
+            elif pyversion[0] == 3 and pyversion[1] == 4 and pyversion[2] == 4:
+                printer.Printer().print_with_status("This version of Python is supported but we recommend that you use Python v3.6.0+!", 1)
+                time.sleep(1)
+            
+            else:
+                del pyversion
         
         self.logger.info("Getting program data...")
         asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, prompt, "loading", 0.15)
@@ -235,8 +285,8 @@ class MainClass(object):
             asciigraphs.ASCIIGraphs().animated_loading_screen_manual(True, "{0}... Done!".format(prompt), "loading", 0.15)
             
         self.logger.info("first_run value is `{0}`.".format(config_handler.ConfigHandler(self.configfile).get("first_run")))
-        # print(config_handler.ConfigHandler(self.configfile).get("first_run"))  # DEV0005
-        # print(type(config_handler.ConfigHandler(self.configfile).get("first_run")))  # DEV0005
+        self.logger.debug(config_handler.ConfigHandler(self.configfile).get("first_run"))
+        self.logger.debug(type(config_handler.ConfigHandler(self.configfile).get("first_run")))
         if config_handler.ConfigHandler(self.configfile).get("first_run") is True:
             if self.first_run() == 0:
                 config_handler.ConfigHandler(self.configfile).set("first_run", "False")
@@ -520,7 +570,7 @@ ddns_token             ::  a string           ::  The user's DDNS token/API key/
                         self.userip)).text
                     
                     duckdns_recv = duckdns_recv.split('\n')
-                    # print(duckdns_recv)  # DEV0005
+                    self.logger.debug(duckdns_recv)
                     if duckdns_recv[0] == "OK":
                         if duckdns_recv[1] == self.userip:
                             if duckdns_recv[3] == "UPDATED":
@@ -551,6 +601,11 @@ ddns_token             ::  a string           ::  The user's DDNS token/API key/
                     self.logger.info("Updating noip.com Domain...")
                     no_ip_updater.update(config_handler.ConfigHandler(self.configfile).get("ddns_token").partition(':::')[0], config_handler.ConfigHandler(self.configfile).get("ddns_token").partition(':::')[2], config_handler.ConfigHandler(self.configfile).get("ddns_domain"), self.userip)
                     
+                except urllib.error.HTTPError as e:
+                    printer.Printer().print_with_status("An error occured when updating noip domain:", 2)
+                    printer.Printer().print_with_status(str(e))
+                    return  9
+
                 except BaseException as error:
                     self.latest_traceback = traceback.format_exc()
                     self.logger.error("An error occured while updating DDNS.")
@@ -652,6 +707,7 @@ ddns_token             ::  a string           ::  The user's DDNS token/API key/
 help | ?                            Show this help menu.
 config | settings                   Access the Settings/Customization Panel.
 update [OPTION]                     Update status of [OPTION]. (Type `update ?` for more info.)
+contacts | cntcts                   Contacts manager.
 first_run                           Start the first-run wizard.
 clrscrn | cls | clr                 Clear the contents of the screen.
 
@@ -679,9 +735,16 @@ ip              Update YOUR IP Address.
 ddns            Update YOUR DDNS domain. (If you use one.)
 """
 
+        elif what == "cntcts":
+            self.logger.info("Returning {0} help menu...".format(what))
+            return """\
+help | ?        Show this help menu.
+add | new       Add a new contact on-line or off-line.
+"""
+
         else:
             self.logger.error("Unknown string is passed to help method.")
-            printer.Printer("Unknown string is passed to help method!", 2)
+            printer.Printer().print_with_status("Unknown string is passed to help method!", 2)
             input("Press enter to continue...")
             return ""
     
@@ -706,10 +769,14 @@ ddns            Update YOUR DDNS domain. (If you use one.)
             self.logger.info("Calling update method...")
             return self.update_status(command)
         
+        elif command.lower().startswith(("cntcts", "contacts")):
+            self.logger.info("Calling contacts_manager() method...")
+            return self.contacts_manager(command)
+        
         elif command.lower().startswith(("first_run",)):
             self.logger.info("Calling first_run() method...")
             return self.first_run()
-        
+
         elif command.lower().startswith(("cls", "clear", "clr")):
             self.logger.info("Clearing the contents of the screen.")
             self.simplelib.clrscrn()
@@ -768,7 +835,7 @@ ddns            Update YOUR DDNS domain. (If you use one.)
                             
                         elif '=' in line:
                             printer.Printer().print_with_status(line.replace('=', ': '), 0)
-                            # print(line.endswith("\n"))  # DEV0005: for debugging purposes only!
+                            # self.logger.debug(line.endswith("\n"))  # DEV0005: Just checking if the line ends with a newline.
                             
                         else:
                             continue
@@ -926,7 +993,7 @@ ddns            Update YOUR DDNS domain. (If you use one.)
                         
                         else:
                             self.logger.info("Writing `{0}` to `{1}`...".format(config_line.partition('=')[0], self.configfile))
-                            # print(config_line.partition('=')[0], '=', config_line.partition('=')[2])  # DEV0005
+                            self.logger.debug("{0} {1} {2}".format(config_line.partition('=')[0], '=', config_line.partition('=')[2]))
                             config_handler.ConfigHandler(self.configfile).set(config_line.partition('=')[0], config_line.partition('=')[2])
                             
                     printer.Printer().print_with_status("Saving current settings to configuration file... Done!", 0)
@@ -1026,7 +1093,7 @@ ddns            Update YOUR DDNS domain. (If you use one.)
                         config_handler.ConfigHandler(self.configfile).get("ddns_provider"), self.PROGRAM_NAME), 2)
                     
                 else:
-                    printer.Printer().print_with_status("Program cannot determine the success of the DDNS update.", 1)
+                    printer.Printer().print_with_status("Program cannot determine the success of the DDNS update. Type `trace` to show latest traceback.", 1)
                 pass
                 
             else:
@@ -1039,6 +1106,74 @@ ddns            Update YOUR DDNS domain. (If you use one.)
             self.logger.info("No options supplied.")
             printer.Printer().print_with_status("No option/s supplied. Type `update help` for more info.", 2)
             return 2
+        
+    def contacts_manager(self, commands):
+        """
+        def contacts_manager():
+            Manages the contact list.
+        """
+
+        self.logger.info("contacts_manager() method called by {0}().".format(sys._getframe().f_back.f_code.co_name))
+
+        commands = commands.split(' ')
+        self.logger.info("Commands: {0}".format(str(commands)))
+        try:
+            command = commands[1]
+
+        except IndexError:
+            self.logger.error("Insufficient number of arguments, printing help menu.")
+            print(self.help("cntcts"))
+            return 0
+        
+        self.logger.info("contacts_manager() method called by {0}().".format(sys._getframe().f_back.f_code.co_name))
+        if command.lower().startswith(("help", "?")):
+            self.logger.info("Printing help menu.")
+            print(self.help("cntcts"))
+            return 0
+
+        elif command.lower().startswith(("add", "new")):
+            self.logger.info("command is `{0}`.".format(command))
+            print("[i] Example: user.duckdns.org  |  192.168.0.101")
+            peer_address = input("[PEER'S ADDRESS]: ")
+            self.logger.info("User entered `{0}` as peer's address".format(peer_address))
+
+            try:
+                new_sock = comms_manager
+                new_sock.ping(peer_address)  # DEV0003
+
+            except ConnectionRefusedError as e:
+                self.latest_traceback = traceback.format_exc()
+                self.logger.error("An error occured while connecting to peer: {0}".format(str(e)))
+                printer.Printer().print_with_status("`{0}` is online, but no connection could be made because the target machine actively refused it.".format(peer_address), 2)
+                return 14
+
+            except Exception as e:
+                self.logger.error("Unknown error occured: {0}".format(str(e)))
+                printer.Printer().print_with_status("An unknown error occured! (Type `trace` to show latest traceback).")
+                self.latest_traceback = traceback.format_exc()
+                self.simplelib.pause()
+                return 10
+
+            else:
+                # Recieve peer's public key or string `denied`.
+                try:
+                    response = socket_obj.recv(2048)
+                    
+                except Exception as e:
+                    self.logger.error("Unknown error occured: {0}".format(str(e)))
+                    printer.Printer().print_with_status("An unknown error occured! (Type `trace` to show latest traceback).")
+                    self.latest_traceback = traceback.format_exc()
+                    self.simplelib.pause()
+                    return 10
+
+                else:
+                    # Close the connection.
+                    socket_obj.close()
+
+        else:
+            self.logger.info("Unknown option supplied, printing help menu.")
+            print(self.help("cntcts"))
+            return 0
     
     def main(self):
         """
@@ -1097,7 +1232,7 @@ ddns            Update YOUR DDNS domain. (If you use one.)
         print()
         while self.byebye is False:
             try:
-                # print(config_handler.ConfigHandler(self.configfile).get())  # DEV0005
+                self.logger.debug(config_handler.ConfigHandler(self.configfile).get())
                 self.command = str(input(self.substitute(self.prompt_main)))
                 self.latest_error_code = self.parse_command(self.command)
                 
@@ -1119,7 +1254,11 @@ ddns            Update YOUR DDNS domain. (If you use one.)
             self.logger.info("byebye is True, now quitting...")
             random_bye = ["Change your password regularly!",
                           "No Man-in-the-Middle!", "RSA and AES FTW!",
-                          "Goodbye!"]
+                          "Goodbye!", "WE NEED PRIVACY!",
+                          "Use proxies!", "Maybe use Tor?",
+                          "Pull requests available!", "Don't snoop on them!",
+                          "Use secure communications!", "{0} made by EHVSN.".format(self.PROGRAM_NAME),
+                          "We code this project overnight!"]
             if random.randint(0, 100) > 70:
                 random_bye = []
                 
@@ -1130,7 +1269,55 @@ ddns            Update YOUR DDNS domain. (If you use one.)
 if __name__ == '__main__':
     exit_code = 999
     try:
-        exit_code = MainClass().main()
+        i = 0
+        args = {}
+        abort_start = False
+        help_menu = """\
+--help | -h                     Show this help menu and exit.
+
+--override-version-check        Disable python version checking on startup.
+--debug | -d                    Enable debug mode.
+
+--test | -t                     Start test suite.
+"""
+
+        while i < len(sys.argv):
+            if sys.argv[i].startswith("--override-version-check"):
+                args['override_pyvercheck'] = True
+
+            elif sys.argv[i].startswith(("--debug", "-d")):
+                args['debug_mode'] = True
+
+            elif sys.argv[i].startswith(("--help", "-h")):
+                print()
+                print(help_menu)
+                print()
+                exit_code = 0
+                abort_start = True
+                break
+
+            elif sys.argv[i].startswith(("--test", "-t")):
+                TestCase().main()
+
+            else:
+                if sys.argv[i] == sys.argv[0]:
+                    i += 1
+                    continue
+
+                print()
+                print("[E] Unknown argument `{0}`!".format(sys.argv[i]))
+                print()
+                print(help_menu)
+                print()
+                exit_code = 13
+                abort_start = True
+                break
+
+            i += 1
+
+        del i
+        if abort_start is False:
+            exit_code = MainClass(args).main()
     
     except BaseException as MainError:
         traceback.print_exc()
@@ -1147,4 +1334,3 @@ if __name__ == '__main__':
 
     except SystemExit:
         os._exit(exit_code)
-        

@@ -41,3 +41,25 @@ class AESCipher(object):
     @staticmethod
     def _unpad(s):
         return s[:-ord(s[len(s)-1:])]
+
+class IdleCipher(object):
+
+    def __init__(self):
+        pass
+
+    def get_info(self):
+        information = {
+        "name": "AES",
+        "description": "The AES encryption and decryption module.",
+        "encryption_values": {"key": "str", "plaintext": "str"},
+        "decryption_values": {"key": "str", "ciphertext": "str:bytes"}
+        }
+
+        return information
+
+    def encrypt(self, key, plaintext):
+        return AESCipher(key).encrypt(plaintext)
+
+    def decrypt(self, key, ciphertext):
+        return AESCipher(key).decrypt(ciphertext)
+        
