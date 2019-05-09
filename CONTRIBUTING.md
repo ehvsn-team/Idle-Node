@@ -1,6 +1,6 @@
 # README for Developers
 
-## How the code is structured?
+## The way the code is structured
 
 + The program is written in Python 3.
 
