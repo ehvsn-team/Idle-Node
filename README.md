@@ -155,7 +155,7 @@
 ## Installing & Running
 
 ------------------------
-1.Questions? Feature requests? Bugs?
+1. Questions? Feature requests? Bugs?
 
       - Just contact us and we'll respond as soon as possible.
       - You can also create a merge request on https://github.com/Idle-Node.git
