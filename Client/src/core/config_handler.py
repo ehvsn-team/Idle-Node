@@ -102,11 +102,20 @@ class ConfigHandler:
                     # print("\t\t\tb: ", content)  # DEV0005
                     # This if-else statement below is *specially* for booleans.
                     # DEV0001: Might introduce bugs in the future!
-                    if content.replace('\n', '').partition('=')[2] == "True":
+                    if content.replace('\n', '').partition('=')[2].lower() == "true":
                         return True
                     
-                    elif content.replace('\n', '').partition('=')[2] == "False":
+                    elif content.replace('\n', '').partition('=')[2].lower() == "false":
                         return False
+
+                    elif content.replace('\n', '').partition('=')[2].isdigit():
+                        return int(content.replace('\n', '').partition('=')[2])
+
+                    elif content.replace('\n', '').partition('=')[2].replace('.', '').isdigit():
+                        return float(content.replace('\n', '').partition('=')[2])
+
+                    elif content.replace('\n', '').partition('=')[2] == "None":
+                        return None
                     
                     else:
                         return content.replace('\n', '').partition('=')[2]

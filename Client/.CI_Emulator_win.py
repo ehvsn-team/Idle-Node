@@ -171,7 +171,7 @@ def run():
     print()
     for arg in sys.argv:
         if arg.lower() == '--recreate':
-            gso('rmdir /s ' + testEnvLinux().py36)
+            gso('rmdir /s /q ' + testEnvLinux().py36)
             gso('dir /b')
             recreates = "[Recreate Virtual Environment]"
 

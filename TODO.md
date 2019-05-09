@@ -23,6 +23,7 @@ This document is used as a list of TO-DOs and other plans.
 - [X] _Finished_ What if the user's IP is version 6? How will the logger check it?
 - [X] _Finished_ Why hide passwords when it is in plaintext when setting a new one?
 - [X] _Finished_ Randomized greeting and when user will logout
+- [X] _Finished_ Refactor
 - [ ] _In Development_ Contacts list.
 - [ ] _On Hold_ Multi-user (Multi-account) Mode
 - [ ] _On Hold_ Encrypt config file and contacts list with the user's password.
@@ -36,4 +37,4 @@ This document is used as a list of TO-DOs and other plans.
 - [ ] _On Hold_ Support IPv6 Addresses.
 - [ ] _On Hold_ Support custom ciphers.
 - [ ] _On Hold_ Support Tor/Proxy connections
-- [ ] _On Hold_ TestCase()
+- [ ] _On Hold_ Benchmarking of encryption algorithms
