@@ -1,9 +1,9 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <!-- Komodo Project File - DO NOT EDIT -->
 <project id="cf50180e-b2b3-4e67-910b-331badc842ba" kpf_version="5" name="EHVSN Idle-Node.komodoproject">
-<preference-set idref="cf50180e-b2b3-4e67-910b-331badc842ba" id="project" preftype="project">
-  <long id="codeintel.scanner.max_depth">0</long>
-  <string id="import_exclude_matches">*.*~;*.bak;*.tmp;CVS;.#*;*.pyo;*.pyc;.svn;_svn;.git;.hg;.bzr;*%25*;tmp*.html;.DS_Store;*.swp;*.kpf;*.komodoproject;.komodotools;__pycache__</string>
-  <long id="prefs_version">1</long>
-</preference-set>
+  <preference-set idref="cf50180e-b2b3-4e67-910b-331badc842ba" id="project" preftype="project">
+    <long id="codeintel.scanner.max_depth">0</long>
+    <string id="import_exclude_matches">*.*~;*.bak;*.tmp;CVS;.#*;*.pyo;*.pyc;.svn;_svn;.git;.hg;.bzr;*%25*;tmp*.html;.DS_Store;*.swp;*.kpf;*.komodoproject;.komodotools;__pycache__</string>
+    <long id="prefs_version">1</long>
+  </preference-set>
 </project>
