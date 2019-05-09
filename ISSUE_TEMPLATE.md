@@ -1,17 +1,21 @@
 # Idle-Node Issue Template
+
 ## Issue Type
+
 [  ] Bug (Severe)
 [  ] Bug (Normal)
 [  ] Enhancement/Maintenance
 [  ] Other; Specify: ____________________
 
 ## Steps to Reproduce (for bugs)
+
 1.
 2.
 3.
 4.
 
 ## Your Environment and Details
+
 * Idle-Node Version used:
 * Operating System and version:
 * Python Version: ( `python3 --version` )
