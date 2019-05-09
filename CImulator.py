@@ -8,7 +8,7 @@ import subprocess
 
 try:
     import virtualenv
-    
+
 except ImportError, ModuleNotFoundError:
     print("[i] Cannot import virtualenv! please install it first.")
     sys.exit(3)
@@ -110,7 +110,7 @@ CREATED :: {2}""".format(project_name, project_desc,
 
                 with open('.CImulator/development/taskboard', 'w') as f:
                     f.write("")
-                    
+
                 with open(".CImulator/development/phase", 'w') as f:
                     f.write("Undefined\n")
 
@@ -217,7 +217,7 @@ class misc:
                 i += 1
 
         return result
-    
+
     def create_virtualenv(self, name):
         """
         def create_virtualenv():
@@ -226,38 +226,38 @@ class misc:
 
         if "|" in venv_path or "&" in venv_path or ";" in venv_path:
             return 2
-        
+
         if os.system("virtualenv {0}".format(venv_path)) == 0:
             return 0
-        
+
         else:
             return 1
 
-    
+
     def activate_virtualenv(self, venv_path):
         """
         def activate_virtualenv():
             Activate the virtual environment <venv>.
         """
-        
+
         if "|" in venv_path or "&" in venv_path or ";" in venv_path:
             return 2
-        
+
         if os.system("source {0}".format(venv_path)) == 0:
             return 0
-        
+
         else:
             return 1
-        
+
     def deactivate_virtualenv(self):
         """
         def deactivate_virtualenv():
             Deactivate currently active virtual environment.
         """
-        
+
         if os.system("deactivate") == 0:
             return 0
-        
+
         else:
             return 1
 
@@ -490,27 +490,27 @@ class ProjectManager:
 
             except(ValueError, TypeError, KeyboardInterrupt, EOFError):
                 continue
-            
+
     def test_routine(self):
         """
         def test_routine():
             Perform test routine.
         """
-        
+
         try:
             CImulator_temp = "CImulator{0}".format(random.randint(0, 1000))
             misc().create_virtualenv(CImulator_temp)
             if os.name == "nt":
                 if os.system("%HOMEPATH%/{0}/Scripts/activate".format(CImulator_temp)) == 0:
                     pass
-                
+
                 else:
                     print("[i] Cannot activate virtual environment!")
                     return 1
-                
+
             else:
                 # DEV0003
-        
+
         except:
             pass
 
@@ -525,20 +525,20 @@ class ProjectManager:
             if result[0] == 0:
                 print(result[1])
                 return 0
-    
+
             else:
                 print("[ERROR WITH GIT]")
                 return 1
-            
+
         else:
             result = os.system('git log --decorate=full --graph')
             if result == 0:
                 return 0
-    
+
             else:
                 print("[ERROR WITH GIT]")
                 return 1
-            
+
 
     def status(self):
         """
@@ -630,7 +630,7 @@ class AutoDevOps(object):
                                 print("Task: {0}".format(tsk[1]))
                                 print("Description:\n{0}".format(tsk[2]))
                                 print()
-                                
+
                         else:
                             print("[i] No tasks yet!")
 

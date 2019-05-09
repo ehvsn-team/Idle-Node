@@ -103,9 +103,11 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-
 # Testing environment
 test-env-3.6
 
 # Developers' folder
 dev/*
+
+# OS
+.DS_Store
