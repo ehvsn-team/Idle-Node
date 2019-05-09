@@ -6,18 +6,18 @@ try:
     import sys
     import time
     import random
+    import signal
     import platform
     import importlib
     import traceback
     
+    # For networking
     import socket
     import requests
     
+    # For hiding sensitive information while typing
     from getpass import getpass
     
-    # DEV0004: For encrypting and decrypting
-    # from core.Cipher import aes
-    # from core.Cipher import rsa
     from core import ansi
     from core import login
     from core import quote
@@ -30,19 +30,28 @@ try:
     from core import comms_manager
     from core import config_handler
 
+    # DEV0004: For encrypting and decrypting
+    # from core.Cipher import aes
+    # from core.Cipher import rsa
+
     # Modules from other sources that is not available
     # on Python repository
 
     # By kelvinss (source: https://github.com/kelvinss/no-ip-updater)
     from core import no_ip_updater
 
+    # By Ran Aroussi (source: https://github.com/ranaroussi/multitasking)
+    from core import multitasking
+
 except ImportError:
     # Prints if error is encountered while importing modules.
-    print("Import Error!")
+    print("[E] Import Error! The program cannot continue...")
     print()
     print("==================== TRACEBACK ====================")
     traceback.print_exc()
     print("===================================================")
+    print()
+    print("[i] Please contact the author of the program and send this traceback.")
     sys.exit(1)
     
 else:
@@ -68,7 +77,6 @@ Exit codes:
 11 = self.ddns_provider contains an unknown value
 12 = Invalid configuration file (Config file is decrypted or corrupted)
 13 = Unknown command-line argument
-
 14 = peer/recipient/server is online, but refused to connect.
 
 """
@@ -79,6 +87,7 @@ config.dat and real_config.dat contents:
 first_run              ::  `True` or `False`  ::  True is the program is not yet started. Otherwise, it is set to False.
 ip_list                ::  a string           ::  The path of the contact list file.
 username               ::  a string           ::  The user's username.
+userid                 ::  a string           ::  A random string generated on startup.
 userpass               ::  an SHA-1 hash      ::  The user's hashed password.
 prompt_main            ::  a string           ::  The string that will show in the main menu prompt.
 prompt_p2p_chat        ::  a string           ::  The string that will show when chatting with peers.
@@ -88,30 +97,20 @@ ddns                   ::  `True` or `False`  ::  True if user uses a DDNS servi
 ddns_provider          ::  a string           ::  The DDNS provider's name.
 ddns_domain            ::  a string           ::  The user's DDNS domain given by the DDNS provider.
 ddns_token             ::  a string           ::  The user's DDNS token/API key/password given by the DDNS provider.
+ping_port              ::  an integer 1~65535 ::  The port that the program will use for recieving ping requests.
+sending_port           ::  an integer 1~65535 ::  The port that the program will use for sending messages
+recieve_port           ::  an integer 1~65535 ::  The port that the program will use for recieving messages
+dedicated_server_ports ::  an integer range   ::  Range of ports that program will use if running as dedicated server.
+trans_plaintext        ::  `True` or `False`  ::  If True, it can be used for transporting messages. This is not recommended
+trans_base64           ::  `True` or `False`  ::  If True, this cipher can be used for transporting messages.
+trans_aes              ::  `True` or `False`  ::  If True, this cipher can be used for transporting messages.
+trans_rsa              ::  `True` or `False`  ::  If True, this cipher can be used for transporting messages.
+trans_aes_rsa_hybrid   ::  `True` or `False`  ::  If True, this cipher can be used for transporting messages.
+trans_third_party      ::  `True` of `False`  ::  If True, third-party ciphers can be used.
+save_conversation_logs ::  `True` or `False`  ::  If True, program will save conversation logs on data/conv_logs.dat
+max_threads            ::  an integer         ::  Number of threads to use
+requests_timeout       ::  an integer         ::  The timeout (in seconds) for requests module.
 """
-
-class TestCase(object):
-    """
-    class TestCase():
-        The test class for <module>.
-
-    """
-
-    def __init__(self):
-        """
-        def __init__(self):
-            The initialization method of TestCase() class.
-
-        """
-
-        pass
-
-    def main(self):
-        self.testMainClass()
-        return 0
-
-    def testMainClass(self):
-        return 0
 
 class MainClass(object):
     """
@@ -126,8 +125,8 @@ class MainClass(object):
         """
 
         # Define high-priority variables.
-        self.logfile = 'data/logfile.log'
-        self.configfile = 'data/config.dat'
+        self.logfile = kwargs.get("logfile", 'data/logfile.log')
+        self.configfile = kwargs.get("configfile", 'data/config.dat')
         
         # Start the logger.
         self.logger = logger.LoggingObject(
@@ -136,8 +135,9 @@ class MainClass(object):
                 )
         
         self.logger.set_logging_level('NOTSET')
-        
-        self.logger.info("Running program on {0}...".format(time.asctime()))
+
+        self.start_time = time.time()        
+        self.logger.info("Running program on {0}...".format(time.ctime(self.start_time)))
         
         # Get the global variables.
         self.logger.info("Getting global variables...")
@@ -146,7 +146,7 @@ class MainClass(object):
         # Define program variables.
         self.logger.info("Defining program variables...")
         self.PROGRAM_NAME = "Idle-Node"
-        self.PROGRAM_VERSION = "0.0.0.5"
+        self.PROGRAM_VERSION = "0.0.0.6"
         self.PROGRAM_DESCRIPTION = "An open-source decentralized messaging platform"
         self.PROGRAM_BANNER = """\
         _ ___  _    ____    _  _ ____ ___  ____ 
@@ -155,6 +155,19 @@ class MainClass(object):
     {0}""".format(self.PROGRAM_DESCRIPTION, self.PROGRAM_VERSION)
     
         self.simplelib = simplelib.SimpleLib()
+
+        self.non_symbols = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+                           'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
+                           'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
+                           'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D',
+                           'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
+                           'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V' ,'W', 'X',
+                           'Y', 'Z']
+
+        self.symbols = ['!', '@', '#', '$', '%', '^', '&', '*',
+                           '(', ')', '-', '_', '=', '+', '[', '{', ']', '}',
+                           ';', ':', '\'', '"', '\\', '|', ',', '<', '.', '>',
+                           '', '/', '?']
     
         # Check if STARTED is False.
         # If false, initialize program.
@@ -165,12 +178,19 @@ class MainClass(object):
             self.arguments = {}
             self.arguments["override_pyvercheck"] = kwargs.get("override_pyvercheck", False)
             self.arguments["debug_mode"] = kwargs.get("debug_mode", False)
-            self.initialize(None, kwargs)
+            signal.signal(signal.SIGINT, self.cleanup)  # Kill threads on CTRL + C.
+            self.initialize(None)
             
         else:
             self.logger.info("STARTED is True, skipping initialization...")
+
+        __end_time = time.time()
+        __init_time = __end_time - self.start_time
+        self.logger.info("Program finished initializing on {0} ({1} seconds to finish initialization)".format(time.ctime(__end_time), __init_time))
+        del __end_time
+        del __init_time
             
-    def initialize(self, prompt=None, kwargs={}):
+    def initialize(self, prompt=None):
         """
         def initialize():
             Initialize the program.
@@ -189,8 +209,8 @@ class MainClass(object):
         if self.arguments['override_pyvercheck'] is False:
             if platform.python_implementation() != 'CPython':
                 printer.Printer().print_with_status("You are not using CPython!", 1)
-                printer.Printer().print_with_status("{0} in {1} is not yet tested. YOU MAY ENCOUNTER BUGS.".format(self.PROGRAM_NAME, platform.python_implementation()), 1)
-                time.sleep(1)
+                printer.Printer().print_with_status("{0} in {1} is not yet tested. YOU MIGHT ENCOUNTER BUGS.".format(self.PROGRAM_NAME, platform.python_implementation()), 1)
+                time.sleep(3)
             
             pyversion = sys.version_info
             self.logger.info("User uses {0} v{1}.{2}.{3}".format(platform.python_implementation(), pyversion[0], pyversion[1], pyversion[2]))
@@ -201,17 +221,17 @@ class MainClass(object):
                 time.sleep(1)
                 
                 try:
+                    self.cleanup(7)
                     sys.exit(7)
                     
                 except SystemExit:
                     os._exit(7)
 
-            elif pyversion[0] == 3 and pyversion[1] == 4 and pyversion[2] == 4:
+            if pyversion[0] < 3 and pyversion[1] < 6 and pyversion[2] < 0:
                 printer.Printer().print_with_status("This version of Python is supported but we recommend that you use Python v3.6.0+!", 1)
                 time.sleep(1)
-            
-            else:
-                del pyversion
+
+            del pyversion
         
         self.logger.info("Getting program data...")
         asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, prompt, "loading", 0.15)
@@ -237,16 +257,23 @@ class MainClass(object):
         self.logger.info("Getting settings/config panel prompt...")
         self.prompt_settings_panel = config_handler.ConfigHandler(self.configfile).get("prompt_settings_panel")
         asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, prompt, "loading", 0.15)
+
         # User details.
         self.logger.info("Getting username...")
         self.username = config_handler.ConfigHandler(self.configfile).get("username")
         asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, prompt, "loading", 0.15)
+        self.logger.info("Getting user ID...")
+        self.userid = config_handler.ConfigHandler(self.configfile).get("userid")
         self.logger.info("Getting userpass...")
         self.userpass = config_handler.ConfigHandler(self.configfile).get("userpass")
+
+        self.logger.info("Getting requests timeout...")
+        asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, prompt, "loading", 0.15)
+        self.requests_timeout = config_handler.ConfigHandler(self.configfile).get("requests_timeout")
         asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, prompt, "loading", 0.15)
         self.logger.info("Getting user IP Address...")
         try:
-            self.userip = requests.get('https://api.ipify.org/').text
+            self.userip = requests.get('https://api.ipify.org/', timeout=self.requests_timeout).text
             
         except(socket.gaierror, requests.packages.urllib3.exceptions.NewConnectionError,
                requests.packages.urllib3.exceptions.MaxRetryError,
@@ -257,7 +284,45 @@ class MainClass(object):
             
         else:
             self.logger.info("User's IP Address is `{0}`.".format(self.userip))
-            
+
+        self.logger.info("Getting ports...")
+        asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, prompt, "loading", 0.15)
+        self.redirection_port = 30000
+        asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, prompt, "loading", 0.15)
+        self.ping_port = config_handler.ConfigHandler(self.configfile).get("ping_port")
+        asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, prompt, "loading", 0.15)
+        self.sending_port = config_handler.ConfigHandler(self.configfile).get("sending_port")
+        asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, prompt, "loading", 0.15)
+        self.recieve_port = config_handler.ConfigHandler(self.configfile).get("recieve_port")
+
+        self.logger.info("Getting Cipher to use on transportation...")
+        asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, prompt, "loading", 0.15)
+        self.transportation_ciphers = {}
+        self.transportation_ciphers["plaintext"] = config_handler.ConfigHandler(self.configfile).get("trans_plaintext")
+        asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, prompt, "loading", 0.15)
+        self.transportation_ciphers["base64"] = config_handler.ConfigHandler(self.configfile).get("trans_base64")
+        asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, prompt, "loading", 0.15)
+        self.transportation_ciphers["aes"] = config_handler.ConfigHandler(self.configfile).get("trans_aes")
+        asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, prompt, "loading", 0.15)
+        self.transportation_ciphers["rsa"] = config_handler.ConfigHandler(self.configfile).get("trans_rsa")
+        asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, prompt, "loading", 0.15)
+        self.transportation_ciphers["aes-rsa-hybrid"] = config_handler.ConfigHandler(self.configfile).get("trans_aes_rsa_hybrid")
+        
+        self.logger.info("Checking if we will save conversation logs...")
+        asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, prompt, "loading", 0.15)
+        self.save_conv_logs = config_handler.ConfigHandler(self.configfile).get("save_conversation_logs")
+
+        self.logger.info("Getting and setting max threads.")
+        asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, prompt, "loading", 0.15)
+        self.max_threads = config_handler.ConfigHandler(self.configfile).get("max_threads")
+        if self.max_threads == 0:
+            self.logger.debug("Max threads: {0}".format(multitasking.config["CPU_CORES"] * 5))
+            multitasking.set_max_threads(multitasking.config["CPU_CORES"] * 5)
+
+        else:
+            self.logger.debug("Max threads: {0}".format(self.max_threads))
+            multitasking.set_max_threads(self.max_threads)
+
         asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, prompt, "loading", 0.15)
         self.logger.info("Setting chat placeholders...")
         self.recvname = ""
@@ -288,10 +353,11 @@ class MainClass(object):
         self.logger.debug(config_handler.ConfigHandler(self.configfile).get("first_run"))
         self.logger.debug(type(config_handler.ConfigHandler(self.configfile).get("first_run")))
         if config_handler.ConfigHandler(self.configfile).get("first_run") is True:
+            config_handler.ConfigHandler(self.configfile).set("userid", self.simplelib.prsg(10, self.non_symbols))
             if self.first_run() == 0:
                 config_handler.ConfigHandler(self.configfile).set("first_run", "False")
                 return 0
-                
+               
             else:
                 return 1
             
@@ -306,6 +372,7 @@ class MainClass(object):
         
         self.logger.info("first_run() method called by {0}().".format(sys._getframe().f_back.f_code.co_name))
         try:
+            print()
             print("\n===============================")
             print("Welcome to {0}!".format(self.PROGRAM_NAME))
             print("===============================")
@@ -414,13 +481,15 @@ class MainClass(object):
                 print("Supported DDNS Providers:")
                 print("    -DuckDNS.org        -noip.com")
                 print()
+                printer.Printer().print_with_status("Please contact us if your favorite DDNS provider is not listed above!", 0)
+                print()
                 while True:
                     try:
                         self.logger.info("Asking user what DDNS provider we will use...")
                         ddns_provider = input("Please enter your DDNS Provider: ")
                         self.logger.info("User entered `{0}`.".format(ddns_provider))
                         
-                        if "duckdns" in  ddns_provider.lower():
+                        if "duckdns" in ddns_provider.lower():
                             self.logger.info("DDNS Provider matched DuckDNS.org")
                             ddns_provider = "DuckDNS"
                             break
@@ -448,7 +517,7 @@ class MainClass(object):
                             self.logger.info("Asking user for DuckDNS.org domain name...")
                             ddns_domain = input("Enter your DuckDNS.org domain name: ")
                             self.logger.info("Asking user for DuckDNS.org token...")
-                            ddns_token = getpass("Enter your DuckDNS.org token: ")
+                            ddns_token = input("Enter your DuckDNS.org token: ")
                             break
                             
                         except(KeyboardInterrupt, EOFError):
@@ -505,6 +574,7 @@ config.dat and real_config.dat contents:
 first_run              ::  `True` or `False`  ::  True is the program is not yet started. Otherwise, it is set to False.
 ip_list                ::  a string           ::  The path of the contact list file.
 username               ::  a string           ::  The user's username.
+userid                 ::  a string           ::  A random string generated on startup.
 userpass               ::  an SHA-1 hash      ::  The user's hashed password.
 prompt_main            ::  a string           ::  The string that will show in the main menu prompt.
 prompt_p2p_chat        ::  a string           ::  The string that will show when chatting with peers.
@@ -514,6 +584,19 @@ ddns                   ::  `True` or `False`  ::  True if user uses a DDNS servi
 ddns_provider          ::  a string           ::  The DDNS provider's name.
 ddns_domain            ::  a string           ::  The user's DDNS domain given by the DDNS provider.
 ddns_token             ::  a string           ::  The user's DDNS token/API key/password given by the DDNS provider.
+ping_port              ::  an integer 1~65535 ::  The port that the program will use for recieving ping requests.
+sending_port           ::  an integer 1~65535 ::  The port that the program will use for sending messages
+recieve_port           ::  an integer 1~65535 ::  The port that the program will use for recieving messages
+dedicated_server_ports ::  an integer range   ::  Range of ports that program will use if running as dedicated server.
+trans_plaintext        ::  `True` or `False`  ::  If True, it can be used for transporting messages. This is not recommended
+trans_base64           ::  `True` or `False`  ::  If True, this cipher can be used for transporting messages.
+trans_aes              ::  `True` or `False`  ::  If True, this cipher can be used for transporting messages.
+trans_rsa              ::  `True` or `False`  ::  If True, this cipher can be used for transporting messages.
+trans_aes_rsa_hybrid   ::  `True` or `False`  ::  If True, this cipher can be used for transporting messages.
+trans_third_party      ::  `True` of `False`  ::  If True, third-party ciphers can be used.
+save_conversation_logs ::  `True` or `False`  ::  If True, program will save conversation logs on data/conv_logs.dat
+max_threads            ::  an integer         ::  Number of threads to use
+requests_timeout       ::  an integer         ::  The timeout (in seconds) for requests module.
         """
         
         try:
@@ -577,8 +660,12 @@ ddns_token             ::  a string           ::  The user's DDNS token/API key/
                                 self.logger.info("No problems are encountered when updating DDNS.")
                                 return 0
                                 
-                            else:
+                            elif duckdns_recv[3] == "NOCHANGE":
                                 self.logger.warning("DuckDNS returns `NOCHANGE`. Record is not updated.")
+                                return 0
+
+                            else:
+                                self.logger.warning("DuckDNS returns an unknown value `{0}`.".format(duckdns_recv[3]))
                                 return 0
                                 
                         else:
@@ -604,7 +691,7 @@ ddns_token             ::  a string           ::  The user's DDNS token/API key/
                 except urllib.error.HTTPError as e:
                     printer.Printer().print_with_status("An error occured when updating noip domain:", 2)
                     printer.Printer().print_with_status(str(e))
-                    return  9
+                    return 9
 
                 except BaseException as error:
                     self.latest_traceback = traceback.format_exc()
@@ -652,10 +739,10 @@ ddns_token             ::  a string           ::  The user's DDNS token/API key/
                 self.logger.info("Password Strength: Long Enough")
                 
             else:
-                print("Password Strength: That password is so strong!")
-                self.logger.info("Password Strength: That password is so strong!")
+                print("Password Strength: That password is so long!")
+                self.logger.info("Password Strength: That password is so long!")
                 
-            if password == username:
+            if password.lower() == username.lower():
                 print("You must not use your username as your password!")
                 return 2
             
@@ -690,7 +777,7 @@ ddns_token             ::  a string           ::  The user's DDNS token/API key/
         result = string.replace("$USERNAME", self.username).replace("$USERIP", self.userip)
         result = result.replace("$RECVNAME", self.recvname).replace("$RECVIP", self.recvip)
         result = result.replace("$GCNAME", self.gcname).replace("$GCIP", self.gcip)
-        
+
         self.logger.info("Returning substituted string.")
         return result
     
@@ -707,6 +794,7 @@ ddns_token             ::  a string           ::  The user's DDNS token/API key/
 help | ?                            Show this help menu.
 config | settings                   Access the Settings/Customization Panel.
 update [OPTION]                     Update status of [OPTION]. (Type `update ?` for more info.)
+status                              Show {0}'s current status.
 contacts | cntcts                   Contacts manager.
 first_run                           Start the first-run wizard.
 clrscrn | cls | clr                 Clear the contents of the screen.
@@ -768,6 +856,62 @@ add | new       Add a new contact on-line or off-line.
         elif command.lower().startswith(("update",)):
             self.logger.info("Calling update method...")
             return self.update_status(command)
+
+        elif command.lower().startswith("status"):
+            self.logger.info("Showing program's current status.")
+            print()
+            printer.Printer().print_with_status("{0} STATUS".format(self.PROGRAM_NAME.upper()), 0)
+            print()
+            printer.Printer().print_with_status("Client Version: {0}".format(self.PROGRAM_VERSION))
+            printer.Printer().print_with_status("Uptime: {0}".format("{0}".format(str(self.simplelib.seconds_to_hms(int(time.time() - self.start_time))))))
+            print()
+            if config_handler.ConfigHandler(self.configfile).get("ddns") is True:
+                printer.Printer().print_with_status("Username: {0} ({1})".format(self.username, config_handler.ConfigHandler(self.configfile).get("ddns_domain")))
+
+            else:
+                printer.Printer().print_with_status("Username: {0} ({1})".format(self.username, self.userip))
+
+            printer.Printer().print_with_status("User ID: {0}".format(self.userid))
+            printer.Printer().print_with_status("Current IP Address: {0}".format(self.userip))
+            if config_handler.ConfigHandler(self.configfile).get("ddns") is True:
+                printer.Printer().print_with_status("Current DDNS Domain: {0} ({1})".format(config_handler.ConfigHandler(self.configfile).get("ddns_domain"), gethost.byname(config_handler.ConfigHandler(self.configfile).get("ddns_domain"))))
+
+            else:
+                printer.Printer().print_with_status("Current DDNS Domain: [DISABLED]")
+
+            print()
+            printer.Printer().print_with_status("To let others chat with you, send them your DDNS Domain.", 1)
+            printer.Printer().print_with_status("If you are not using a DDNS service, send them your IP Address", 1)
+            printer.Printer().print_with_status("But be careful on who you trust!", 1)
+            printer.Printer().print_with_status("We recommend that you use a proxy/VPN and a DDNS service to hide your real IP.", 1)
+            print()
+            printer.Printer().print_with_status("Ping/Latency Port: {0}".format(str(self.ping_port)))
+            printer.Printer().print_with_status("Sending Port: {0}".format(str(self.sending_port)))
+            printer.Printer().print_with_status("Recieve Port: {0}".format(str(self.recieve_port)))
+            print()
+            printer.Printer().print_with_status("Save Conversation Logs: {0}".format(str(self.save_conv_logs)))
+            print()
+            allowed_ciphers = ""
+            for cipher in self.transportation_ciphers:
+                if self.transportation_ciphers[cipher] is True:
+                    allowed_ciphers += "{0} | ".format(cipher)
+
+                else:
+                    continue
+
+            allowed_ciphers = allowed_ciphers[::-1]
+            allowed_ciphers = allowed_ciphers.partition(" | ")[2]
+            allowed_ciphers = allowed_ciphers[::-1]
+
+            printer.Printer().print_with_status("Allowed Ciphers: {0}".format(allowed_ciphers))
+            print()
+            printer.Printer().print_with_status("Interpreter: {0} v{1}.{2}.{3}".format(platform.python_implementation(), sys.version_info[0], sys.version_info[1], sys.version_info[2]))
+            printer.Printer().print_with_status("Debug Mode: {0}".format(self.arguments['debug_mode']))
+            printer.Printer().print_with_status("Log File: {0}".format(self.logfile))
+            printer.Printer().print_with_status("Configuration File: {0}".format(self.configfile))
+            printer.Printer().print_with_status("Maximum Threads: {0} (Real Value: {1} | 0 is default; depends on CPU count.)".format(self.max_threads, multitasking.config['MAX_THREADS']))
+            printer.Printer().print_with_status("Running Tasks: {0} (Max: {1})".format(len(multitasking.config['TASKS']) + 1, (multitasking.config['MAX_THREADS'] + 1)))
+            print()
         
         elif command.lower().startswith(("cntcts", "contacts")):
             self.logger.info("Calling contacts_manager() method...")
@@ -826,12 +970,15 @@ add | new       Add a new contact on-line or off-line.
                         elif line == "":
                             continue
                         
-                        elif line.startswith("first_run="):
+                        elif line.startswith(("first_run=", "userid=")):
                             continue
                         
                         elif 'pass' in line.partition('=')[0] or 'token' in line.partition('=')[0]:
                             printer.Printer().print_with_status("{0}: {1}".format(line.partition('=')[0],
                                 ('*' * len(line.partition('=')[2]))), 0)
+
+                        elif line.partition('=')[2] == "":
+                            printer.Printer().print_with_status("{0}: [NO VALUE]".format(line.partition('=')[0]), 0)
                             
                         elif '=' in line:
                             printer.Printer().print_with_status(line.replace('=', ': '), 0)
@@ -844,12 +991,11 @@ add | new       Add a new contact on-line or off-line.
                     
                 elif config_command.lower().startswith(("set")):
                     self.logger.info("Set command called.")
-                    config_command = config_command.split(' ')
                     try:
                         self.logger.info("Getting option and its value...")
-                        option = config_command[1]
+                        option = config_command.split(' ')[1]
                         try:
-                            value = config_command[2]
+                            value = config_command.partition(' ')[2].partition(' ')[2]
                             
                         except(IndexError):
                             value = "None"
@@ -860,7 +1006,7 @@ add | new       Add a new contact on-line or off-line.
                         printer.Printer().print_with_status("USAGE: set [OPTION] [VALUE]", 2)
                         continue
                     
-                    if option.startswith(('#', "first_run=")):
+                    if option.startswith(('#', "first_run", "userid")):
                         self.logger.error("Invalid option supplied.")
                         printer.Printer().print_with_status("Invalid option!", 2)
                         continue
@@ -897,6 +1043,56 @@ add | new       Add a new contact on-line or off-line.
                             else:
                                 printer.Printer().print_with_status("Both values does not match!", 2)
                                 continue
+
+                        self.logger.info("Checking if value type is the same as the old values type.")
+                        if type(config_handler.ConfigHandler(self.configfile).get(option)) is bool:
+                            self.logger.info("option needs a boolean value.")
+                            if value.lower() == 'true':
+                                value = "True"
+
+                            elif value.lower() == 'false':
+                                value = "False"
+
+                            elif value.startswith("0"):
+                                value = "False"
+
+                            elif value.startswith("1"):
+                                value = "True"
+
+                            else:
+                                self.logger.error("value is not true/false/0/1!")
+                                printer.Printer().print_with_status("Boolean values must be True, False, 0, or 1!", 2)
+                                continue
+
+                        elif type(config_handler.ConfigHandler(self.configfile).get(option)) is str:
+                            self.logger.info("option needs a string value. Passing.")
+                            pass
+
+                        elif type(config_handler.ConfigHandler(self.configfile).get(option)) is int:
+                            self.logger.info("option needs an integer value.")
+                            try:
+                                int(value)
+
+                            except(TypeError, ValueError):
+                                self.logger.info("The value was not an integer!")
+                                printer.Printer().print_with_status("The option needs an integer value!", 2)
+                                continue
+
+                        elif type(config_handler.ConfigHandler(self.configfile).get(option)) is float:
+                            self.logger.info("option needs a floating-point value.")
+                            try:
+                                float(value)
+                                if '.' not in str(value):
+                                    value = str(value) + '.0'
+
+                            except(TypeError, ValueError):
+                                self.logger.info("value is not a floating-point!")
+                                printer.Printer().print_with_status("The option needs a floating point value!", 2)
+                                continue
+
+                        else:
+                            printer.Printer().print_with_status("Option needs an unknown value type!", 2)
+                            continue
 
                         self.logger.info("Updating config lines...")
                         new_config_lines = []
@@ -997,7 +1193,7 @@ add | new       Add a new contact on-line or off-line.
                             config_handler.ConfigHandler(self.configfile).set(config_line.partition('=')[0], config_line.partition('=')[2])
                             
                     printer.Printer().print_with_status("Saving current settings to configuration file... Done!", 0)
-                    printer.Printer().print_with_status("Please restart {0} to use the new configuration.".format(self.PROGRAM_NAME), 1)
+                    self.initialize("Loading new configuration")
                     continue
                 
                 elif config_command.lower().startswith(("cls", "clear", "clr")):
@@ -1054,7 +1250,7 @@ add | new       Add a new contact on-line or off-line.
                 self.logger.info("Updating IP Address of user.")
                 printer.Printer().print_with_status("Updating your IP Address...", 0)
                 try:
-                    self.userip = requests.get('https://api.ipify.org/').text
+                    self.userip = requests.get('https://api.ipify.org/', timeout=self.requests_timeout).text
     
                 except(socket.gaierror, requests.packages.urllib3.exceptions.NewConnectionError,
                        requests.packages.urllib3.exceptions.MaxRetryError,
@@ -1138,8 +1334,7 @@ add | new       Add a new contact on-line or off-line.
             self.logger.info("User entered `{0}` as peer's address".format(peer_address))
 
             try:
-                new_sock = comms_manager
-                new_sock.ping(peer_address)  # DEV0003
+                pass # DEV0003
 
             except ConnectionRefusedError as e:
                 self.latest_traceback = traceback.format_exc()
@@ -1174,6 +1369,17 @@ add | new       Add a new contact on-line or off-line.
             self.logger.info("Unknown option supplied, printing help menu.")
             print(self.help("cntcts"))
             return 0
+
+    def cleanup(self, error_code=0, *args):
+        """
+        def cleanup():
+            Do cleanup and return
+
+        """
+
+        multitasking.killall()
+
+        return error_code
     
     def main(self):
         """
@@ -1191,6 +1397,7 @@ add | new       Add a new contact on-line or off-line.
             try:
                 if len(config_handler.ConfigHandler(self.configfile).get("userpass")) != 0:
                     ask4pass = self.hashit(getpass("Please enter your password: "))
+                    # DEV0004: Try to decrypt files. If error occured, means wrong password
                     if ask4pass == config_handler.ConfigHandler(self.configfile).get("userpass"):
                         self.simplelib.clrscrn()
                         break
@@ -1211,7 +1418,7 @@ add | new       Add a new contact on-line or off-line.
                     try:
                         quitconfirm = input("[Answer]: ")
                         if quitconfirm.lower() == 'y':
-                            return 0
+                            return self.cleanup(0)
                         
                         elif quitconfirm.lower() == 'n':
                             break
@@ -1220,7 +1427,7 @@ add | new       Add a new contact on-line or off-line.
                             continue
                         
                     except(KeyboardInterrupt, EOFError):
-                        return 1
+                        return self.cleanup(1)
                 
             except Exception as err:
                 self.latest_traceback = traceback.format_exc()
@@ -1232,7 +1439,7 @@ add | new       Add a new contact on-line or off-line.
         print()
         while self.byebye is False:
             try:
-                self.logger.debug(config_handler.ConfigHandler(self.configfile).get())
+                # self.logger.debug(config_handler.ConfigHandler(self.configfile).get())  # DEV0005: If we let this active, it will be a security issue
                 self.command = str(input(self.substitute(self.prompt_main)))
                 self.latest_error_code = self.parse_command(self.command)
                 
@@ -1241,14 +1448,14 @@ add | new       Add a new contact on-line or off-line.
                 self.latest_traceback = traceback.format_exc()
                 printer.Printer().print_with_status("CTRL+C and/or CTRL+D detected, forcing {0} to quit...".format(
                     self.PROGRAM_NAME), 1)
-                return 1
+                return self.cleanup(1)
             
             except BaseException as error:
                 self.latest_traceback = traceback.format_exc()
                 printer.Printer().print_with_status("An unknown error occured:", 2)
                 print(str(error))
                 print(self.latest_traceback)
-                return 10
+                return self.cleanup(10)
                 
         else:
             self.logger.info("byebye is True, now quitting...")
@@ -1258,12 +1465,13 @@ add | new       Add a new contact on-line or off-line.
                           "Use proxies!", "Maybe use Tor?",
                           "Pull requests available!", "Don't snoop on them!",
                           "Use secure communications!", "{0} made by EHVSN.".format(self.PROGRAM_NAME),
-                          "We code this project overnight!"]
+                          "We code this project overnight!",
+                          "We are not doing anything illegal, right?"]
             if random.randint(0, 100) > 70:
                 random_bye = []
                 
             print(quote.quote(random_bye))
-            return 0
+            return self.cleanup(0)
 
 # If running independently, run main() function.
 if __name__ == '__main__':
@@ -1273,22 +1481,18 @@ if __name__ == '__main__':
         args = {}
         abort_start = False
         help_menu = """\
---help | -h                     Show this help menu and exit.
+--help | -h                                     Show this help menu and exit.
 
---override-version-check        Disable python version checking on startup.
---debug | -d                    Enable debug mode.
+--config-file=[FILEPATH] | -c [FILEPATH]        Use the configuration file <FILEPATH>.
+--logfile=[FILEPATH] | -l [FILENAME]            Specify a path on where to write the logs.
+--override-version-check                        Disable python version checking on startup.
 
---test | -t                     Start test suite.
+--debug | -d                                    Enable debug mode.
+--test | -t                                     Start test suite.
 """
 
         while i < len(sys.argv):
-            if sys.argv[i].startswith("--override-version-check"):
-                args['override_pyvercheck'] = True
-
-            elif sys.argv[i].startswith(("--debug", "-d")):
-                args['debug_mode'] = True
-
-            elif sys.argv[i].startswith(("--help", "-h")):
+            if sys.argv[i].startswith(("--help", "-h")):
                 print()
                 print(help_menu)
                 print()
@@ -1296,8 +1500,104 @@ if __name__ == '__main__':
                 abort_start = True
                 break
 
+            elif sys.argv[i].startswith("--config-file"):
+                try:
+                    configfile2use = sys.argv[i].partition('=')[2]
+                    if os.path.exist(configfile2use):
+                        if os.path.isfile(configfile2use):
+                            args['configfile'] = configfile2use
+
+                        else:
+                            printer.Printer().print_with_status("Filepath is a directory!")
+                            print()
+                            print(help_menu)
+                            print()
+                            abort_start = True
+                            break
+
+                    else:
+                        printer.Printer().print_with_status("Filepath does not exist!")
+                        print()
+                        print(help_menu)
+                        print()
+                        abort_start = True
+                        break
+
+                except IndexError:
+                    printer.Printer().print_with_status("Please specify the configuration file path!", 2)
+                    print()
+                    print(help_menu)
+                    print()
+                    abort_start = True
+                    break
+
+            elif sys.argv[i].startswith("-c"):
+                try:
+                    i += 1
+                    configfile2use = sys.argv[i]
+                    if os.path.exists(configfile2use):
+                        if os.path.isfile(configfile2use):
+                            args['configfile'] = configfile2use
+
+                        else:
+                            printer.Printer().print_with_status("Filepath is a directory!")
+                            print()
+                            print(help_menu)
+                            print()
+                            abort_start = True
+                            break
+
+                    else:
+                        printer.Printer().print_with_status("Filepath does not exist!")
+                        print()
+                        print(help_menu)
+                        print()
+                        abort_start = True
+                        break
+
+                except IndexError:
+                    printer.Printer().print_with_status("Please specify the configuration file path!", 2)
+                    print()
+                    print(help_menu)
+                    print()
+                    abort_start = True
+                    break
+
+            elif sys.argv[i].startswith("--logfile"):
+                try:
+                    args['logfile'] = sys.argv[i].partition('=')[2]
+
+                except IndexError:
+                    printer.Printer().print_with_status("Please specify the logfile path!", 2)
+                    print()
+                    print(help_menu)
+                    print()
+                    abort_start = True
+                    break
+
+            elif sys.argv[i].startswith("-l"):
+                try:
+                    i += 1
+                    args['logfile'] = sys.argv[i]
+
+                except IndexError:
+                    printer.Printer().print_with_status("Please specify the configuration file path!", 2)
+                    print()
+                    print(help_menu)
+                    print()
+                    abort_start = True
+                    break
+
+            elif sys.argv[i].startswith("--override-version-check"):
+                args['override_pyvercheck'] = True
+
+            elif sys.argv[i].startswith(("--debug", "-d")):
+                args['debug_mode'] = True
+
             elif sys.argv[i].startswith(("--test", "-t")):
-                TestCase().main()
+                printer.Printer().print_with_status("Not yet developed!", 1)
+                abort_start = True
+                break
 
             else:
                 if sys.argv[i] == sys.argv[0]:

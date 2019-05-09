@@ -1,8 +1,34 @@
-# Idle-Node v0.0.0.5
+# Idle-Node v0.0.0.6
 ## Copyright (C) 2019 :: EHVSN (Ethical Hackers vs Noobs)
 [Idle-Node](https://github.com/Catayao56/Idle-Node.git) is an open-source decentralized messaging platform written in Python.
 
 ## What's new?
++ Configuration manager now raises an error if the new value type is not the same as the old value type.
+
++ Updated Simple Library module.
+
++ Config files updated.
+  * Added port values.
+
++ Removed TestCase() class.
+
++ Logfiles and configuration files can now be set using the
+`--config-file` and `--logfile` command-line arguments.
+
++ New method (cleanup()) now runs when KeyboardInterrupt and proper exit is detected.
+
++ User IDs are now generated on first run.
+  * User IDs will be your "unique" identification.
+  * If Alice and Bob has the same usernames, they are still distinguishable via their unique user IDs.
+
++ Set timeout on requests.
++ DuckDNS token input is now shown.
++ New command `status`.
+  * As the command implies, it shows the program status.
+
++ Program now automatically loads the new configuration file after saving.
++ Fixed possible security issue. (config file contents are written on to the logfile.)
+
 + Cipher modules now in core/Ciphers Folder.
 
 + Command-line arguments now functional.
@@ -95,6 +121,16 @@
     + Developer: [Catayao56](https://github.com/Catayao56)
     + Security Researcher: [Steffan (Aeneas of Troy)](https://github.com/aeneasoftroy)
     + The Ethical Hackers vs Noobs (EHVSN) Team
+
+* Third-Party Modules
+    + Multitasking Module: [Ran Aroussi](https://github.com/ranaroussi/multitasking)
+    + no_ip_updater Module: [Kelvin Steiner](kelvinsteinersantos@gmail.com)
+    + cowsay Module: [Jesse Chan-Norris](http://www.nog.net/~tony/warez/cowsay.shtml)
+    + PyCryptodome Authors
+
+* Miscellaneous
+    + RealPython Community
+    + The Python Organization
 
 ## Minimum Requirements
 + Internet Connection

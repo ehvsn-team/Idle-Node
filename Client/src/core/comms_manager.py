@@ -2,8 +2,10 @@ import os
 import sys
 import time
 
+import signal
 import socket
 
+from core import multitasking
 from core import logger
 
 """
@@ -11,6 +13,9 @@ comms_manager.py
 
 Handles communications between peers and/or servers.
 """
+
+# Kill all running tasks on CTRL+C.
+signal.signal(signal.SIGINT, multitasking.killall)
 
 class PeerToPeer(object):
     """
@@ -65,4 +70,15 @@ def ping(remote_ip):
 
     socket_obj = socket.socket()
     socket_obj.connect((peer_address, 30000))
-    socket_obj.sendall()  # DEV0003
+    socket_obj.sendall()
+
+# @multitasking.task
+def activate_redirection_port():
+    """
+    def activate_redirection_port():
+        Listen for connection on port 30,000.
+
+    """
+
+    pass
+    # DEV0003
