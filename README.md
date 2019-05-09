@@ -1,8 +1,11 @@
 # Idle-Node v0.0.0.6
+
 ## Copyright (C) 2019 :: EHVSN (Ethical Hackers vs Noobs)
+
 [Idle-Node](https://github.com/Catayao56/Idle-Node.git) is an open-source decentralized messaging platform written in Python.
 
-## What's new?
+## New features
+
 + Configuration manager now raises an error if the new value type is not the same as the old value type.
 
 + Updated Simple Library module.
@@ -81,7 +84,7 @@
       searching for articles there...
 
 + Multiplatform
-    - As long as there is Internet connection, Python 3.6+, and dependencies in your 
+    - As long as there is Internet connection, Python 3.6+, and dependencies in your
       machine, you can run Idle-Node!
 
 + Lots of available interfaces
@@ -149,6 +152,6 @@
 ## Installing & Running
 ------------------------
 1.Questions? Feature requests? Bugs?
-      
+
       -Just contact us and we'll respond as soon as possible.
       -You can also create a merge request on https://github.com/Idle-Node.git
