@@ -341,7 +341,7 @@ class SimpleLib:
             | ???                 | None       |
             '---------------------'------------'
             """
-            
+
         elif mode == 2:
             result = platform.system()
             """
@@ -355,20 +355,20 @@ class SimpleLib:
             | ???                 | None       |
             '---------------------'------------'
             """
-            
+
         elif mode == 3:
             result = platform.uname()
             """
             Return a 5-tuple containing information identifying the current operating system.
-            
+
             The tuple contains 5 strings:
-            
+
             (sysname,
             nodename,
             release,
             version,
             machine)
-            
+
             Some systems truncate the nodename to 8 characters or to the leading component;
             a better way to get the hostname is socket.gethostname() or even
             socket.gethostbyaddr(socket.gethostname()).
@@ -662,7 +662,7 @@ class SimpleLib:
                     else:
                         while operation_to_use == "/":
                             operation_to_use = operations[random.randint(0, (len(operations) - 1))]
-                    
+
                     number = []
                     number.append(random.randint(0, 100))
                     number.append(random.randint(0, 100))
@@ -706,7 +706,7 @@ class SimpleLib:
                     else:
                         while operation2 == "/":
                             operation2 = operations[random.randint(0, (len(operations) - 1))]
-                    
+
                     number = []
                     number.append(random.randint(1, 100))
                     number.append(random.randint(1, 50))
@@ -946,7 +946,7 @@ class SimpleLib:
         """
         def seconds_to_datetime():
             Convert seconds to human-readable date and time.
-        
+
         """
 
         return datetime.fromtimestamp(seconds).strftime(format)

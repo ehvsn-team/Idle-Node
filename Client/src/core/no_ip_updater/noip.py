@@ -46,7 +46,7 @@ messages = {
 	"nochg":   "[SUCCESS] No update needed to host.",
 	"nohost":  "[ERROR] Host doesn't exist.",
 	"badauth": "[ERROR] Username or password is invalid.",
-	"badagent":"[ERROR] Client disabled. Client should exit and not perform any more updates without user intervention.", 
+	"badagent":"[ERROR] Client disabled. Client should exit and not perform any more updates without user intervention.",
 	"!donator":"[ERROR] An update request was sent including a feature that is not available to that particular user such as offline options.",
 	"abuse":   "[ERROR] Username is blocked due to abuse.",
 	"911":     "[ERROR] A fatal error on our side such as a database outage. Retry the update no sooner than 30 minutes"
