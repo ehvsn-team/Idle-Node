@@ -1,5 +1,7 @@
 # TO-DO list
+
 ## Information
+
 This document is used as a list of TO-DOs and other plans.
 
  [X] _IN DEVELOPMENT_ +++Implement the login panel.
@@ -11,11 +13,8 @@ This document is used as a list of TO-DOs and other plans.
   |
   ``X`` if the feature is done.
 
-
-
-
-
 ## General
+
 - [X] _Finished_ +++Develop the Main Module.
 - [X] _Finished_ Settings/Customization Panel.
 - [X] _Finished_ When you choose no in first run wizard, there is no DDNS keys in the config file.
