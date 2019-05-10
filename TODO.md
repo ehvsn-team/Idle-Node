@@ -28,7 +28,7 @@ This document is used as a list of TO-DOs and other plans.
 - [ ] _On Hold_ Encrypt config file and contacts list with the user's password.
 - [ ] _On Hold_ Peer-to-Peer Chat.
 - [ ] _On Hold_ Group Chat / Conference Room.
-- [ ] _On Hold_ Update loggers and docstrings.
+- [ ] _On Hold_ Update loggers, comments, and docstrings.
 - [ ] _On Hold_ All changed settings will be discarded when `*` option is supplied.
 - [ ] _On Hold_ config_handler.py processes even when value is not string (e.g.: OSError)
 - [ ] _On Hold_ Crashing when config file is not encoded and config_handler.py uses it.

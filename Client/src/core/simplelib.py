@@ -132,6 +132,7 @@ global COPYRIGHT
 MODULE_NAME = "Simple Library"
 MODULE_VERSION = 1.9
 MODULE_HISTORY = {
+    "1.10": "Added list_directory_tree()",
     "1.9": "get_python_version(), encode(), and decode() added",
     "1.8": "is_windows() variable `PLATFORM` is now lower-cased. \
     Updated captcha_picker(), now it is named captcha(). \
@@ -959,3 +960,26 @@ class SimpleLib:
         """
 
         return datetime.timedelta(seconds=seconds)
+
+    def list_directory_tree(self, path=".", exceptions=[]):
+        |"""
+        def list_directory_tree():
+            Return a list of directory paths. Recurse through subdirectories.
+
+        """
+
+        dirs = []
+        filenames = []
+
+        for dirname, dirnames, filenames in os.walk(path):
+            for subdirname in dirnames:
+                dirs.append(os.path.join(dirname, subdirname))
+
+            for filename in filenames:
+                filenames.append(os.path.join(dirname, filename))
+
+            for exc in exceptions:
+                if exc in dirnames:
+                    dirnames.remove(exc)
+
+        return dirs, filenames
