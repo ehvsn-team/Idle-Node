@@ -111,3 +111,6 @@ dev/*
 
 # OS
 .DS_Store
+
+# Komodo IDE project file
+.komodoproject

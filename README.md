@@ -2,7 +2,7 @@
 
 ## Copyright (C) 2019 :: EHVSN (Ethical Hackers vs Noobs)
 
-[Idle-Node](https://github.com/Catayao56/Idle-Node.git) is an open-source decentralized messaging platform written in Python.
+[Idle-Node](https://github.com/ehvsn-team/Idle-Node.git) is an open-source decentralized messaging platform written in Python.
 
 ## New features
 
@@ -99,7 +99,7 @@
   * This software connects to the following:
   01. ``https://api.ipify.org`` (For getting machine's remote IP Address.)
   02. ``https://www.duckdns.org`` (If you use this as your DDNS provider, Idle-Node will contact DuckDNS.org's server.)
-  03. ``gttps://www.noip.com`` (If you use this as your DDNS provider, Idle-Node will contact noip.com's server.)
+  03. ``https://www.noip.com`` (If you use this as your DDNS provider, Idle-Node will contact noip.com's server.)
   04. ``Your recipient/chatroom`` (Self-explanatory...)
 
 ## License and Copying
@@ -123,6 +123,7 @@
 
 * Development Team
   * Developer: [Catayao56](https://github.com/Catayao56)
+  * Developer: [Beyar Nahro](https://github.com/Beyarz)
   * Security Researcher: [Steffan (Aeneas of Troy)](https://github.com/aeneasoftroy)
   * The Ethical Hackers vs Noobs (EHVSN) Team
 
@@ -158,4 +159,4 @@
 1. Questions? Feature requests? Bugs?
 
       - Just contact us and we'll respond as soon as possible.
-      - You can also create a merge request on https://github.com/Idle-Node.git
+      - You can also create a merge request on https://github.com/ehvsn-team/Idle-Node.git
