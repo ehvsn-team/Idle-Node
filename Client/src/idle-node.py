@@ -183,6 +183,11 @@ class MainClass(object):
 
         else:
             self.logger.info("STARTED is True, skipping initialization...")
+            
+        # Start listening on the redirection port.
+        # DEV0003
+        self.sockets['main'] = comms_manager.Main("MainConnection")
+        self.sockets['main'].activate_redirection_port(self.redirection_port)
 
         __end_time = time.time()
         __init_time = __end_time - self.start_time

@@ -155,8 +155,18 @@
 
 ## Installing & Running
 
-------------------------
 1. Questions? Feature requests? Bugs?
 
       - Just contact us and we'll respond as soon as possible.
       - You can also create a merge request on https://github.com/ehvsn-team/Idle-Node.git
+
+## Troubleshooting
+
+* Idle-Node not accepting external connections
+  * If you can connect from a different PC inside your private network,
+    then there's nothing wrong with Idle-Node. It's almost certain that
+    there's something wrong with your router or the port forwarding configuration.
+
+    Make sure that you've re-reviewed your port forwarding settings and
+    perhaps try restarting the router (be careful to verify your internally
+    assigned IP addresses haven't changed if you go this route).
