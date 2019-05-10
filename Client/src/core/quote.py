@@ -13,7 +13,7 @@ def quote(headers=[]):
         joke8 = "If you give a hacker a new toy, the first thing he'll do is take it apart to figure out how it works."
         joke9 = "Press any key... no, no, no, NOT THAT ONE!"
         headers = [joke1, joke2, joke3, joke4, joke5, joke6, joke7, joke8, joke9]
-        
+
     result = headers[randint(0, len(headers) - 1)]
-        
+
     return result

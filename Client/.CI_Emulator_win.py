@@ -6,7 +6,6 @@ import sys
 from time import sleep as timeout
 from subprocess import getstatusoutput as gso
 
-
 class testEnvLinux:
 
     def __init__(self, newenv=True):

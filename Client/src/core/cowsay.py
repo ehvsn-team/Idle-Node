@@ -10,7 +10,7 @@ def cowsay(str, length=40):
 
 def build_cow():
 	return """
-         \   ^__^ 
+         \   ^__^
           \  (oo)\_______
              (__)\       )\/\\
                  ||----w |
@@ -46,10 +46,10 @@ def get_border(lines, index):
 
 	elif index == 0:
 		return [ "/", "\\" ]
-	
+
 	elif index == len(lines) - 1:
 		return [ "\\", "/" ]
-	
+
 	else:
 		return [ "|", "|" ]
 

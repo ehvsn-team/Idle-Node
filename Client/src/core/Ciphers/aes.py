@@ -6,7 +6,7 @@ import hashlib
 try:
     from Crypto import Random
     from Crypto.Cipher import AES
-    
+
 except ImportError:
     # Prints if error is encountered while importing modules.
     print("Import Error!")
@@ -19,7 +19,7 @@ except ImportError:
 
 class AESCipher(object):
 
-    def __init__(self, key): 
+    def __init__(self, key):
         self.bs = 32
         self.key = hashlib.sha256(key.encode()).digest()
 
@@ -62,4 +62,3 @@ class IdleCipher(object):
 
     def decrypt(self, key, ciphertext):
         return AESCipher(key).decrypt(ciphertext)
-        
