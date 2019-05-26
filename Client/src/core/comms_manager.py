@@ -22,6 +22,7 @@ class Main(object):
         :param connection_name type(str): The object name.
         
         :param logger_obj type(object): The logger instance.
+        :param max_threads type(int): Maximum threads to use.
 
         :param sock_obj type(obj): The socket to object. If sock_obj is passed,
                                    then socket_type and protocol_family is ignored.
@@ -60,7 +61,9 @@ class Main(object):
         self.logger.info("comms_manager.Main() called by {0}().".format(sys._getframe().f_back.f_code.co_name))
 
         self.broadcast_ip = "0.0.0.0"
-        self.port = 30000
+        self.port = kwargs.get('redirection_port', 30000)
+
+        self.max_threads = kwargs.get('max_threads', multitasking.config["CPU_CORES"] * 5)
         
         # Contains: <ip>: <port> <last connection>
         # last connection is for limiting ip connection.
@@ -70,6 +73,9 @@ class Main(object):
         self.kill_signal = False
             
         self.sock_obj = kwargs.get("sock_obj", None)
+
+        parent_module = sys.modules['.'.join(__name__.split('.')[:-1]) or '__main__']
+        self.logger.debug(parent_module)
 
         if self.sock_obj is None:
             self.logger.info("Determining socket type...")
@@ -120,7 +126,7 @@ class Main(object):
             continue
         
         multitasking.killall()
-        
+
     @multitasking.task
     def activate_redirection_port(self):
         """
@@ -134,6 +140,7 @@ class Main(object):
             self.sock_obj.listen(self.max_backlog)
             self.remote_ip, self.remote_port = self.sock_obj.accept()
             request = self.sock_obj.recv(1024)
+            # Check what request sender wants
 
 
 class PeerToPeer(object):
@@ -167,7 +174,7 @@ class PeerToPeer(object):
 
     """
 
-    def __init__(self, connection_name=__name__, remote_ip, remote_port, logger_obj=None, **kwargs):
+    def __init__(self, connection_name=__name__, remote_ip=None, remote_port=None, logger_obj=None, **kwargs):
         """
         def __init__(self):
             The initialization method of Main() class.
@@ -184,6 +191,9 @@ class PeerToPeer(object):
 
         self.logger.info("comms_manager.PeerToPeer() called by {0}().".format(sys._getframe().f_back.f_code.co_name))
 
+        if remote_ip is None or remote_port is None:
+            raise ValueError("You must supply a value for remote_ip and remote_port!")
+            
         self.remote_ip = remote_ip
         self.remote_port = remote_port
         
@@ -249,3 +259,4 @@ class PeerToPeer(object):
         """
 
         # DEV0003
+        pass

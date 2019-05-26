@@ -23,6 +23,7 @@ This document is used as a list of TO-DOs and other plans.
 - [X] _Finished_ Why hide passwords when it is in plaintext when setting a new one?
 - [X] _Finished_ Randomized greeting and when user will logout
 - [X] _Finished_ Refactor
+- [ ] _In Development_ Graphical User Interface
 - [ ] _In Development_ Contacts list.
 - [ ] _On Hold_ Multi-user (Multi-account) Mode
 - [ ] _On Hold_ Encrypt config file and contacts list with the user's password.

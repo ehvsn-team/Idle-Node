@@ -15,6 +15,8 @@ try:
     import socket
     import requests
 
+    # NOTE: The Tkinter module is imported on the command-line arguments evaluation.
+
     # For hiding sensitive information while typing
     from getpass import getpass
 
@@ -178,17 +180,30 @@ class MainClass(object):
             self.arguments = {}
             self.arguments["override_pyvercheck"] = kwargs.get("override_pyvercheck", False)
             self.arguments["debug_mode"] = kwargs.get("debug_mode", False)
+            self.arguments["no-gui"] = kwargs.get("no-gui", False)
             signal.signal(signal.SIGINT, self.cleanup)  # Kill threads on CTRL + C.
             self.initialize(None)
 
         else:
             self.logger.info("STARTED is True, skipping initialization...")
-            
-        # Start listening on the redirection port.
-        self.sockets['main'] = comms_manager.Main("MainConnection", self.logger)
-        self.sockets['main'].activate_redirection_port(self.redirection_port)
 
-        # DEV0003
+        # If no-gui argument is True, use shell instead.
+        if self.arguments["no-gui"] is True:
+            pass
+
+        else:
+            self.logger.info("Creating GUI instance...")
+            self.gui = {}
+            self.gui["main_scr"] = tkinter.Tk()
+            self.logger.info("Setting title...")
+            self.gui["main_scr_label"] = tkinter.Label(self.gui["main_scr"], text="{0} v{1} -- {2}".format(self.PROGRAM_NAME, self.PROGRAM_VERSION, self.PROGRAM_DESCRIPTION))
+            self.gui["main_scr_label"].mainloop()
+            # DEV0003
+            
+        self.sockets = {}
+        # Start listening on the redirection port.
+        self.sockets['main'] = comms_manager.Main("MainConnection", self.logger, max_threads=self.max_threads, redirection_port=self.redirection_port)
+        self.sockets['main'].activate_redirection_port()
 
         __end_time = time.time()
         __init_time = __end_time - self.start_time
@@ -640,6 +655,21 @@ requests_timeout       ::  an integer         ::  The timeout (in seconds) for r
         """
 
         return self.simplelib.hash(string, cipher)
+
+    def get_task_number(self):
+        """
+        def get_task_number():
+            Get running tasks (threads/processes) and maximum tasks.
+
+        """
+
+        tasks = 0
+        max_tasks = 0
+
+        tasks = multitasking.config['TASKS'] + comms_manager.multitasking.config['TASKS']
+        max_threads = multitasking.config['MAX_THREADS'] + comms_manager.multitasking.config['MAX_THREADS']
+
+        return (tasks, max_threads)
 
     def update_ddns_service(self):
         """
@@ -1395,7 +1425,7 @@ add | new       Add a new contact on-line or off-line.
 
         self.logger.info("main() method called by {0}().".format(sys._getframe().f_back.f_code.co_name))
 
-        # Start the interactive shell.
+        # Start the interactive shell or the GUI.
         self.logger.info("Starting interactive shell...")
         print(self.PROGRAM_BANNER)
         print()
@@ -1446,8 +1476,34 @@ add | new       Add a new contact on-line or off-line.
         while self.byebye is False:
             try:
                 # self.logger.debug(config_handler.ConfigHandler(self.configfile).get())  # DEV0005: If we let this active, it will be a security issue
-                self.command = str(input(self.substitute(self.prompt_main)))
-                self.latest_error_code = self.parse_command(self.command)
+                new_command = str(input(self.substitute(self.prompt_main)))
+                self.logger.debug(new_command)
+                # DEV0003
+                if ' && ' in new_command:
+                    self.logger.info("&& characters detected, stripping command.")
+                    new_command = new_command.split(" && ")
+                    self.logger.debug(new_command)
+                    for command in new_command:
+                        self.command = command
+                        self.latest_error_code = self.parse_command(self.command)
+
+                elif ' || ' in new_command:
+                    self.logger.info("|| characters detected, stripping command.")
+                    new_command = new_command.split(" || ")
+                    self.logger.debug(new_command)
+                    for command in new_command:
+                        self.command = command
+                        self.latest_error_code = self.parse_command(self.command)
+                        if self.latest_error_code == 0:
+                            continue
+
+                        else:
+                            break
+
+                else:
+                    self.logger.info("no && and/or || characters detected, not stripping command.")
+                    self.logger.debug(new_command)
+                    self.latest_error_code = self.parse_command(self.command)
 
             except(KeyboardInterrupt, EOFError):
                 self.logger.warning("CTRL+C and/or CTRL+D detected, forcing to quit...")
@@ -1489,6 +1545,8 @@ if __name__ == '__main__':
         help_menu = """\
 --help | -h                                     Show this help menu and exit.
 
+--no-gui | -g                                      Disable Graphical User Interface
+
 --config-file=[FILEPATH] | -c [FILEPATH]        Use the configuration file <FILEPATH>.
 --logfile=[FILEPATH] | -l [FILENAME]            Specify a path on where to write the logs.
 --override-version-check                        Disable python version checking on startup.
@@ -1506,10 +1564,13 @@ if __name__ == '__main__':
                 abort_start = True
                 break
 
+            elif sys.argv[i].startswith(("--no-gui", "-g")):
+                args['no-gui'] = True
+
             elif sys.argv[i].startswith("--config-file"):
                 try:
                     configfile2use = sys.argv[i].partition('=')[2]
-                    if os.path.exist(configfile2use):
+                    if os.path.exists(configfile2use):
                         if os.path.isfile(configfile2use):
                             args['configfile'] = configfile2use
 
@@ -1623,6 +1684,26 @@ if __name__ == '__main__':
 
         del i
         if abort_start is False:
+            if args.get('no-gui', False) is True:
+                # Do not import Tkinter.
+                pass
+
+            else:
+                try:
+                    import tkinter
+
+                except ImportError:
+                    printer.Printer().print_with_status("An error occured while importing Tkinter module!", 2)
+                    printer.Printer().print_with_status("Program will continue but GUI will be disabled.", 1)
+                    print()
+                    print("==================== TRACEBACK ====================")
+                    traceback.print_exc()
+                    print("===================================================")
+                    print()
+                    args['no-gui'] = False
+                    time.sleep(3)
+
+            # Call main method
             exit_code = MainClass(args).main()
 
     except BaseException as MainError:

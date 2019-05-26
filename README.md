@@ -152,6 +152,7 @@
 * Dependencies
   * requests
   * pycryptodome
+  * tkinter (For GUI Interface)
 
 ## Installing & Running
 

@@ -962,7 +962,7 @@ class SimpleLib:
         return datetime.timedelta(seconds=seconds)
 
     def list_directory_tree(self, path=".", exceptions=[]):
-        |"""
+        """
         def list_directory_tree():
             Return a list of directory paths. Recurse through subdirectories.
 
