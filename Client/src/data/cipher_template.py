@@ -15,6 +15,11 @@ class IdleCipher(object):
     def get_info(self):
         information = {
         "name": "Cipher Name",
+        # Type can be the following:
+        # encryption: Encrypting messages
+        # signature: Signing messages
+        # hash: hashing data
+        "type": "encryption,signature,hash",
         "description": "Cipher description",
         "encryption_values": {"key": "str", "plaintext": "str"},
         "decryption_values": {"key": "str", "ciphertext": "str:bytes"}
@@ -27,3 +32,19 @@ class IdleCipher(object):
 
     def decrypt(self, key, ciphertext):
         return ciphertext.replace(key, "")[::1]
+
+    def sign(self, key, data):
+        # For signature cipher algorithms only
+        return data + key
+
+    def verify(self, key, data):
+        # For signature cipher algorithms only
+        if key in data:
+            return True
+
+        else:
+            return False
+
+    def hash(self, data):
+        # For hashing algorithms only
+        return data

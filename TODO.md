@@ -22,7 +22,8 @@ This document is used as a list of TO-DOs and other plans.
 - [X] _Finished_ What if the user's IP is version 6? How will the logger check it?
 - [X] _Finished_ Why hide passwords when it is in plaintext when setting a new one?
 - [X] _Finished_ Randomized greeting and when user will logout
-- [X] _Finished_ Refactor
+- [X] _Finished_ Rewrite
+- [ ] _In Development_ Benchmarking
 - [ ] _In Development_ Graphical User Interface
 - [ ] _In Development_ Contacts list.
 - [ ] _On Hold_ Multi-user (Multi-account) Mode

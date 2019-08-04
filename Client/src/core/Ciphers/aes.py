@@ -50,6 +50,7 @@ class IdleCipher(object):
     def get_info(self):
         information = {
         "name": "AES",
+        "type": "encryption",
         "description": "The AES encryption and decryption module.",
         "encryption_values": {"key": "str", "plaintext": "str"},
         "decryption_values": {"key": "str", "ciphertext": "str:bytes"}

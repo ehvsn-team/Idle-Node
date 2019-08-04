@@ -33,8 +33,8 @@ try:
     from core import config_handler
 
     # DEV0004: For encrypting and decrypting
-    # from core.Cipher import aes
-    # from core.Cipher import rsa
+    from core.Ciphers import aes
+    from core.Ciphers import rsa
 
     # Modules from other sources that is not available
     # on Python repository
@@ -95,6 +95,7 @@ prompt_main            ::  a string           ::  The string that will show in t
 prompt_p2p_chat        ::  a string           ::  The string that will show when chatting with peers.
 prompt_gc_chat         ::  a string           ::  The string that will show when chatting on a conference room.
 prompt_settings_panel  ::  a string           ::  The string that will show when on the settings panel.
+prompt_benchmark       ::  a string           ::  The string that will show when benchmarking.
 ddns                   ::  `True` or `False`  ::  True if user uses a DDNS service. Otherwise, it is set to False.
 ddns_provider          ::  a string           ::  The DDNS provider's name.
 ddns_domain            ::  a string           ::  The user's DDNS domain given by the DDNS provider.
@@ -277,6 +278,9 @@ class MainClass(object):
         self.logger.info("Getting group chat/conference room prompt...")
         self.prompt_gc_chat = config_handler.ConfigHandler(self.configfile).get("prompt_gc_chat")
         asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, prompt, "loading", 0.15)
+        # Prompt when benchmarking
+        self.logger.info("Getting benchmarking prompt...")
+        self.prompt_benchmark = config_handler.ConfigHandler(self.configfile).get("prompt_benchmark")
         # Prompt when editing config files.
         self.logger.info("Getting settings/config panel prompt...")
         self.prompt_settings_panel = config_handler.ConfigHandler(self.configfile).get("prompt_settings_panel")
@@ -576,7 +580,17 @@ class MainClass(object):
             return 10
 
         else:
+            self.logger.info("Generating primary RSA keys...")
+            printer.Printer().print_with_status("Generating primary RSA keys...")
+            if rsa.Main().generate_key(self.keypath + "main.pem") == 0:
+                pass
+
+            else:
+                self.latest_traceback = traceback.format_exc()
+                printer.Printer().print_with_status("An unknown error occured while generating your primary RSA key. Please try again later.")
+
             self.logger.info("Saving settings to configuration file...")
+
             self.save_settings2config(True, username, userpass, use_ddns, ddns_provider, ddns_domain, ddns_token)
             return 0
 
@@ -835,6 +849,7 @@ config | settings                   Access the Settings/Customization Panel.
 update [OPTION]                     Update status of [OPTION]. (Type `update ?` for more info.)
 status                              Show {0}'s current status.
 contacts | cntcts                   Contacts manager.
+benchmark | bench                   Benchmark cipher algorithms.
 first_run                           Start the first-run wizard.
 clrscrn | cls | clr                 Clear the contents of the screen.
 
@@ -956,6 +971,10 @@ add | new       Add a new contact on-line or off-line.
         elif command.lower().startswith(("cntcts", "contacts")):
             self.logger.info("Calling contacts_manager() method...")
             return self.contacts_manager(command)
+
+        elif command.lower().startswith(( "benchmark", "bench")):
+            self.logger.info("Calling benchmark() method...")
+            return self.benchmark()
 
         elif command.lower().startswith(("first_run",)):
             self.logger.info("Calling first_run() method...")
@@ -1421,6 +1440,81 @@ add | new       Add a new contact on-line or off-line.
 
         return error_code
 
+    def benchmark(self):
+        """
+        def benchmark():
+            Benchmark cipher algorithms.
+        """
+
+        test_key = "0eH-1L&Qt779KNOO"
+        test_pubkey = ""
+        # DEV0003
+
+        test_string = "This is a test sentence."
+        test_string_long = """
+This is a long test paragraph.
+Please read the Zen of Python by Tim Peters:
+
+The Zen of Python, by Tim Peters
+
+Beautiful is better than ugly.
+Explicit is better than implicit.
+Simple is better than complex.
+Complex is better than complicated.
+Flat is better than nested.
+Sparse is better than dense.
+Readability counts.
+Special cases aren't special enough to break the rules.
+Although practicality beats purity.
+Errors should never pass silently.
+Unless explicitly silenced.
+In the face of ambiguity, refuse the temptation to guess.
+There should be one-- and preferably only one --obvious way to do it.
+Although that way may not be obvious at first unless you're Dutch.
+Now is better than never.
+Although never is often better than *right* now.
+If the implementation is hard to explain, it's a bad idea.
+If the implementation is easy to explain, it may be a good idea.
+Namespaces are one honking great idea -- let's do more of those!
+        """
+
+        print("Enter `all` to test all cipher algorithms.")
+        print("Enter a cipher name to test the specified cipher.")
+        print("Enter `list` to list all available cipher algorithms.")
+        print()
+        while True:
+            try:
+                command = str(input(self.substitute(self.prompt_main)))
+                if command.lower() == "all":
+                    printer.Printer().print_with_status("Starting string benchmark...", 1)
+                    e_str_benchmarks = {}
+
+                    printer.Printer().print_with_status("Benchmarking AES algorithm...")
+                    e_str_benchmarks["AES"] = [time.time(), 0.0, 0.0]
+                    aes_test = aes.IdleCipher().encrypt(test_key, test_string)
+                    e_str_benchmarks["AES"][1] = time.time()
+                    aes.IdleCipher().decrypt(test_key, aes_test)
+                    e_str_benchmarks["AES"][2] = time.time()
+                    del aes_test
+
+                    printer.Printer().print_with_status("Benchmarking RSA algorithm...")
+                    e_str_benchmarks["RSA"] = [time.time(), 0.0, 0.0]
+                    rsa_test = rsa
+
+                else:
+                    print("Enter `all` to test all cipher algorithms.")
+                    print("Enter a cipher name to test the specified cipher.")
+                    print("Enter `list` to list all available cipher algorithms.")
+
+            except Exception as e:
+                self.latest_traceback = traceback.format_exc()
+                printer.Printer().print_with_status("An error occured while benchmarking: {0}".format(str(e)))
+
+            finally:
+                print("ENCRYPTION:")
+                print("AES: ")
+                # DEV0003
+
     def main(self):
         """
         def main():
@@ -1482,7 +1576,6 @@ add | new       Add a new contact on-line or off-line.
                 # self.logger.debug(config_handler.ConfigHandler(self.configfile).get())  # DEV0005: If we let this active, it will be a security issue
                 new_command = str(input(self.substitute(self.prompt_main)))
                 self.logger.debug(new_command)
-                # DEV0003
                 if ' && ' in new_command:
                     self.logger.info("&& characters detected, stripping command.")
                     new_command = new_command.split(" && ")
