@@ -26,4 +26,4 @@ class IdleCipher(object):
     	return key + plaintext[::-1] + key
 
     def decrypt(self, key, ciphertext):
-        return plaintext.replace(key, "")[::1]
+        return ciphertext.replace(key, "")[::1]

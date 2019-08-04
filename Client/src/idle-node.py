@@ -148,7 +148,7 @@ class MainClass(object):
         # Define program variables.
         self.logger.info("Defining program variables...")
         self.PROGRAM_NAME = "Idle-Node"
-        self.PROGRAM_VERSION = "0.0.0.6"
+        self.PROGRAM_VERSION = "0.0.0.7"
         self.PROGRAM_DESCRIPTION = "An open-source decentralized messaging platform"
         self.PROGRAM_BANNER = """\
         _ ___  _    ____    _  _ ____ ___  ____
@@ -174,7 +174,7 @@ class MainClass(object):
         # Check if STARTED is False.
         # If false, initialize program.
         self.logger.info("Checking if STARTED is False...")
-        if STARTED is False:
+        if STARTED == False:
             self.logger.info("STARTED is False, calling initialize() method...")
             self.logger.info("Getting command-line arguments...")
             self.arguments = {}
@@ -188,18 +188,21 @@ class MainClass(object):
             self.logger.info("STARTED is True, skipping initialization...")
 
         # If no-gui argument is True, use shell instead.
-        if self.arguments["no-gui"] is True:
-            pass
+        # DEV0002: Please test this first!
+        if self.arguments["no-gui"] == True:
+            self.logger.debug(self.arguments["no-gui"])
+            self.logger.info("GUI is Disabled.")
+            ansi.set_title(self.PROGRAM_NAME)
 
         else:
+            self.logger.debug(self.arguments["no-gui"])
             self.logger.info("Creating GUI instance...")
             self.gui = {}
             self.gui["main_scr"] = tkinter.Tk()
             self.logger.info("Setting title...")
             self.gui["main_scr_label"] = tkinter.Label(self.gui["main_scr"], text="{0} v{1} -- {2}".format(self.PROGRAM_NAME, self.PROGRAM_VERSION, self.PROGRAM_DESCRIPTION))
             self.gui["main_scr_label"].mainloop()
-            # DEV0003
-            
+
         self.sockets = {}
         # Start listening on the redirection port.
         self.sockets['main'] = comms_manager.Main("MainConnection", self.logger, max_threads=self.max_threads, redirection_port=self.redirection_port)
@@ -218,16 +221,16 @@ class MainClass(object):
         """
 
         self.logger.info("initialize() method called by {0}().".format(sys._getframe().f_back.f_code.co_name))
-        if prompt is None:
+        if prompt == None:
             prompt = "Starting {0}...".format(self.PROGRAM_NAME)
 
         self.logger.info("Evaluating command-line arguments...")
-        if self.arguments["debug_mode"] is True:
+        if self.arguments["debug_mode"] == True:
             self.logger.enable_logging()
 
         self.logger.info("User uses {0}.".format(platform.python_implementation()))
         self.logger.debug("self.arguments['override_pyvercheck']: {0}".format(self.arguments['override_pyvercheck']))
-        if self.arguments['override_pyvercheck'] is False:
+        if self.arguments['override_pyvercheck'] == False:
             if platform.python_implementation() != 'CPython':
                 printer.Printer().print_with_status("You are not using CPython!", 1)
                 printer.Printer().print_with_status("{0} in {1} is not yet tested. YOU MIGHT ENCOUNTER BUGS.".format(self.PROGRAM_NAME, platform.python_implementation()), 1)
@@ -373,7 +376,7 @@ class MainClass(object):
         self.logger.info("first_run value is `{0}`.".format(config_handler.ConfigHandler(self.configfile).get("first_run")))
         self.logger.debug(config_handler.ConfigHandler(self.configfile).get("first_run"))
         self.logger.debug(type(config_handler.ConfigHandler(self.configfile).get("first_run")))
-        if config_handler.ConfigHandler(self.configfile).get("first_run") is True:
+        if config_handler.ConfigHandler(self.configfile).get("first_run") == True:
             config_handler.ConfigHandler(self.configfile).set("userid", self.simplelib.prsg(10, self.non_symbols))
             if self.first_run() == 0:
                 config_handler.ConfigHandler(self.configfile).set("first_run", "False")
@@ -426,7 +429,7 @@ class MainClass(object):
                             approved = False
                             continue
 
-                    if approved is True:
+                    if approved == True:
                         pass
 
                     else:
@@ -498,7 +501,7 @@ class MainClass(object):
                 except(KeyboardInterrupt, EOFError):
                     continue
 
-            if use_ddns is True:
+            if use_ddns == True:
                 print("Supported DDNS Providers:")
                 print("    -DuckDNS.org        -noip.com")
                 print()
@@ -507,7 +510,7 @@ class MainClass(object):
                 while True:
                     try:
                         self.logger.info("Asking user what DDNS provider we will use...")
-                        ddns_provider = input("Please enter your DDNS Provider: ")
+                        ddns_provider = input("Please enter your DDNS Provider (Ex.: `duckdns.org` or simply `duckdns`): ")
                         self.logger.info("User entered `{0}`.".format(ddns_provider))
 
                         if "duckdns" in ddns_provider.lower():
@@ -531,7 +534,7 @@ class MainClass(object):
             else:
                 pass
 
-            if use_ddns is True:
+            if use_ddns == True:
                 if ddns_provider == "DuckDNS":
                     while True:
                         try:
@@ -637,7 +640,7 @@ requests_timeout       ::  an integer         ::  The timeout (in seconds) for r
             config_handler.ConfigHandler(self.configfile).set("ddns_token", ddns_token)
             self.logger.info("Finished saving settings to configuration file!")
             self.logger.info("Updating values...")
-            if load_settings is True:
+            if load_settings == True:
                 self.initialize("Updating values...")
 
             return 0
@@ -678,7 +681,7 @@ requests_timeout       ::  an integer         ::  The timeout (in seconds) for r
         """
 
         self.logger.info("update_ddns_service() method called by {0}().".format(sys._getframe().f_back.f_code.co_name))
-        if config_handler.ConfigHandler(self.configfile).get("ddns") is True:
+        if config_handler.ConfigHandler(self.configfile).get("ddns") == True:
             self.logger.info("Updating DDNS Service...")
             if config_handler.ConfigHandler(self.configfile).get("ddns_provider") == "DuckDNS":
                 try:
@@ -756,27 +759,27 @@ requests_timeout       ::  an integer         ::  The timeout (in seconds) for r
             username = self.username
 
         if len(password) < 6:
-            printer.Printer().print_with_status("Your password must be atleast 6 characters!")
+            printer.Printer().print_with_status("Your password must be atleast 6 characters!", 2)
             self.logger.error("User's password is not long enough.")
             return 1
 
         else:
             self.logger.info("Checking for password strength....")
             if len(password) <= 8:
+                print("Password Strength: Bad")
+                self.logger.info("Password Strength: Bad")
+
+            elif len(password) > 8 and len(password) <= 12:
+                print("Password Strength: OK")
+                self.logger.info("Password Strength: OK")
+
+            elif len(password) > 12 and len(password) <= 18:
                 print("Password Strength: Good")
                 self.logger.info("Password Strength: Good")
 
-            elif len(password) > 8 and len(password) <= 12:
+            else:
                 print("Password Strength: Better")
                 self.logger.info("Password Strength: Better")
-
-            elif len(password) > 12 and len(password) <= 18:
-                print("Password Strength: Long enough")
-                self.logger.info("Password Strength: Long Enough")
-
-            else:
-                print("Password Strength: That password is so long!")
-                self.logger.info("Password Strength: That password is so long!")
 
             if password.lower() == username.lower():
                 print("You must not use your username as your password!")
@@ -795,7 +798,7 @@ requests_timeout       ::  an integer         ::  The timeout (in seconds) for r
                 else:
                     symbol_only = False
 
-            if symbol_only is True:
+            if symbol_only == True:
                 print("[SUGGESTION]: Your password must have letters and numbers.")
 
             del symbol_only
@@ -879,6 +882,7 @@ add | new       Add a new contact on-line or off-line.
         """
 
         self.logger.info("parse_command() called by {0}().".format(sys._getframe().f_back.f_code.co_name))
+        self.logger.debug(type(command))
         if command.lower().startswith(("help", "?")):
             self.logger.info("Printing help.")
             print(self.help())
@@ -901,7 +905,7 @@ add | new       Add a new contact on-line or off-line.
             printer.Printer().print_with_status("Client Version: {0}".format(self.PROGRAM_VERSION))
             printer.Printer().print_with_status("Uptime: {0}".format("{0}".format(str(self.simplelib.seconds_to_hms(int(time.time() - self.start_time))))))
             print()
-            if config_handler.ConfigHandler(self.configfile).get("ddns") is True:
+            if config_handler.ConfigHandler(self.configfile).get("ddns") == True:
                 printer.Printer().print_with_status("Username: {0} ({1})".format(self.username, config_handler.ConfigHandler(self.configfile).get("ddns_domain")))
 
             else:
@@ -909,7 +913,7 @@ add | new       Add a new contact on-line or off-line.
 
             printer.Printer().print_with_status("User ID: {0}".format(self.userid))
             printer.Printer().print_with_status("Current IP Address: {0}".format(self.userip))
-            if config_handler.ConfigHandler(self.configfile).get("ddns") is True:
+            if config_handler.ConfigHandler(self.configfile).get("ddns") == True:
                 printer.Printer().print_with_status("Current DDNS Domain: {0} ({1})".format(config_handler.ConfigHandler(self.configfile).get("ddns_domain"), gethost.byname(config_handler.ConfigHandler(self.configfile).get("ddns_domain"))))
 
             else:
@@ -929,7 +933,7 @@ add | new       Add a new contact on-line or off-line.
             print()
             allowed_ciphers = ""
             for cipher in self.transportation_ciphers:
-                if self.transportation_ciphers[cipher] is True:
+                if self.transportation_ciphers[cipher] == True:
                     allowed_ciphers += "{0} | ".format(cipher)
 
                 else:
@@ -1147,7 +1151,7 @@ add | new       Add a new contact on-line or off-line.
                                 new_config_lines.append(line)
 
                         self.logger.info("Checking if program has changed the value...")
-                        if changed is False:
+                        if changed == False:
                             self.logger.error("Cannot find option `{0}` in the config file!".format(option))
                             printer.Printer().print_with_status("Cannot find option `{0}`!".format(option), 2)
 
@@ -1203,7 +1207,7 @@ add | new       Add a new contact on-line or off-line.
                                     new_config_lines.append(line)
 
                             self.logger.info("Checking if program has changed the value...")
-                            if changed is False:
+                            if changed == False:
                                 self.logger.error("Cannot find option `{0}` in the config file!".format(option))
                                 printer.Printer().print_with_status("Cannot find option `{0}`!".format(option), 0)
 
@@ -1307,7 +1311,7 @@ add | new       Add a new contact on-line or off-line.
                 self.logger.info("Updating user DDNS...")
                 upddns = self.update_ddns_service()
                 if upddns == 0:
-                    if config_handler.ConfigHandler(self.configfile).get("ddns") is True:
+                    if config_handler.ConfigHandler(self.configfile).get("ddns") == True:
                         printer.Printer().print_with_status("DDNS domain successfully updated!", 0)
 
                     else:
@@ -1473,7 +1477,7 @@ add | new       Add a new contact on-line or off-line.
         print(self.PROGRAM_BANNER)
         print('"' + quote.quote() + '"')
         print()
-        while self.byebye is False:
+        while self.byebye == False:
             try:
                 # self.logger.debug(config_handler.ConfigHandler(self.configfile).get())  # DEV0005: If we let this active, it will be a security issue
                 new_command = str(input(self.substitute(self.prompt_main)))
@@ -1503,6 +1507,7 @@ add | new       Add a new contact on-line or off-line.
                 else:
                     self.logger.info("no && and/or || characters detected, not stripping command.")
                     self.logger.debug(new_command)
+                    self.command = new_command
                     self.latest_error_code = self.parse_command(self.command)
 
             except(KeyboardInterrupt, EOFError):
@@ -1528,7 +1533,8 @@ add | new       Add a new contact on-line or off-line.
                           "Pull requests available!", "Don't snoop on them!",
                           "Use secure communications!", "{0} made by EHVSN.".format(self.PROGRAM_NAME),
                           "We code this project overnight!",
-                          "We are not doing anything illegal, right?"]
+                          "We are not doing anything illegal, right?",
+                          "Don't be shy to make a pull request on https://github.com/ehvsn-team/Idle-Node.git !"]
             if random.randint(0, 100) > 70:
                 random_bye = []
 
@@ -1565,7 +1571,7 @@ if __name__ == '__main__':
                 break
 
             elif sys.argv[i].startswith(("--no-gui", "-g")):
-                args['no-gui'] = True
+                args['no-gui'] = False
 
             elif sys.argv[i].startswith("--config-file"):
                 try:
@@ -1683,8 +1689,8 @@ if __name__ == '__main__':
             i += 1
 
         del i
-        if abort_start is False:
-            if args.get('no-gui', False) is True:
+        if abort_start == False:
+            if args.get('no-gui', False) == True:
                 # Do not import Tkinter.
                 pass
 
@@ -1700,7 +1706,7 @@ if __name__ == '__main__':
                     traceback.print_exc()
                     print("===================================================")
                     print()
-                    args['no-gui'] = False
+                    args['no-gui'] = True
                     time.sleep(3)
 
             # Call main method
