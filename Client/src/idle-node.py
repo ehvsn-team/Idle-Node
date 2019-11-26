@@ -113,6 +113,7 @@ trans_third_party      ::  `True` of `False`  ::  If True, third-party ciphers c
 save_conversation_logs ::  `True` or `False`  ::  If True, program will save conversation logs on data/conv_logs.dat
 max_threads            ::  an integer         ::  Number of threads to use
 requests_timeout       ::  an integer         ::  The timeout (in seconds) for requests module.
+keypath                ::  a string           ::  The path where the keys are stored.
 """
 
 class MainClass(object):
@@ -335,6 +336,8 @@ class MainClass(object):
         self.transportation_ciphers["rsa"] = config_handler.ConfigHandler(self.configfile).get("trans_rsa")
         asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, prompt, "loading", 0.15)
         self.transportation_ciphers["aes-rsa-hybrid"] = config_handler.ConfigHandler(self.configfile).get("trans_aes_rsa_hybrid")
+        asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, prompt, "loading", 0.15)
+        self.keypath = config_handler.ConfigHandler(self.configfile).get("keypath")
 
         self.logger.info("Checking if we will save conversation logs...")
         asciigraphs.ASCIIGraphs().animated_loading_screen_manual(False, prompt, "loading", 0.15)
@@ -635,6 +638,7 @@ trans_third_party      ::  `True` of `False`  ::  If True, third-party ciphers c
 save_conversation_logs ::  `True` or `False`  ::  If True, program will save conversation logs on data/conv_logs.dat
 max_threads            ::  an integer         ::  Number of threads to use
 requests_timeout       ::  an integer         ::  The timeout (in seconds) for requests module.
+keypath                ::  a string           ::  The path where the keys are stored.
         """
 
         try:
