@@ -8,7 +8,7 @@ try:
     import random
     import signal
     import platform
-    import importlib
+    # import importlib
     import traceback
 
     # For networking
@@ -116,6 +116,7 @@ requests_timeout       ::  an integer         ::  The timeout (in seconds) for r
 keypath                ::  a string           ::  The path where the keys are stored.
 """
 
+
 class MainClass(object):
     """
     MainClass():
@@ -152,7 +153,7 @@ class MainClass(object):
         self.PROGRAM_NAME = "Idle-Node"
         self.PROGRAM_VERSION = "0.0.0.7"
         self.PROGRAM_DESCRIPTION = "An open-source decentralized messaging platform"
-        self.PROGRAM_BANNER = """\
+        self.PROGRAM_BANNER = r"""\
         _ ___  _    ____    _  _ ____ ___  ____
         | |  \ |    |___ __ |\ | |  | |  \ |___
         | |__/ |___ |___    | \| |__| |__/ |___ v{1}
@@ -165,7 +166,7 @@ class MainClass(object):
                            'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
                            'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D',
                            'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
-                           'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V' ,'W', 'X',
+                           'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X',
                            'Y', 'Z']
 
         self.symbols = ['!', '@', '#', '$', '%', '^', '&', '*',
@@ -176,7 +177,7 @@ class MainClass(object):
         # Check if STARTED is False.
         # If false, initialize program.
         self.logger.info("Checking if STARTED is False...")
-        if STARTED == False:
+        if STARTED is False:
             self.logger.info("STARTED is False, calling initialize() method...")
             self.logger.info("Getting command-line arguments...")
             self.arguments = {}
@@ -191,7 +192,7 @@ class MainClass(object):
 
         # If no-gui argument is True, use shell instead.
         # DEV0002: Please test this first!
-        if self.arguments["no-gui"] == True:
+        if self.arguments["no-gui"] is True:
             self.logger.debug(self.arguments["no-gui"])
             self.logger.info("GUI is Disabled.")
             ansi.set_title(self.PROGRAM_NAME)
@@ -223,16 +224,16 @@ class MainClass(object):
         """
 
         self.logger.info("initialize() method called by {0}().".format(sys._getframe().f_back.f_code.co_name))
-        if prompt == None:
+        if prompt is None:
             prompt = "Starting {0}...".format(self.PROGRAM_NAME)
 
         self.logger.info("Evaluating command-line arguments...")
-        if self.arguments["debug_mode"] == True:
+        if self.arguments["debug_mode"] is True:
             self.logger.enable_logging()
 
         self.logger.info("User uses {0}.".format(platform.python_implementation()))
         self.logger.debug("self.arguments['override_pyvercheck']: {0}".format(self.arguments['override_pyvercheck']))
-        if self.arguments['override_pyvercheck'] == False:
+        if self.arguments['override_pyvercheck'] is False:
             if platform.python_implementation() != 'CPython':
                 printer.Printer().print_with_status("You are not using CPython!", 1)
                 printer.Printer().print_with_status("{0} in {1} is not yet tested. YOU MIGHT ENCOUNTER BUGS.".format(self.PROGRAM_NAME, platform.python_implementation()), 1)
